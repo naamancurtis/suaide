@@ -1,5 +1,7 @@
+use crate::enums::Priority;
 use chrono::{NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Task {
@@ -40,21 +42,8 @@ impl Task {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Eq, Ord, PartialOrd, PartialEq, Hash)]
-pub enum Priority {
-    Critical,
-    Today,
-    Week,
-    Sometime,
-}
-
-impl ToString for Priority {
-    fn to_string(&self) -> String {
-        match self {
-            Priority::Critical => String::from("Absolultely Critical"),
-            Priority::Today => String::from("Needs to be done today"),
-            Priority::Week => String::from("Needs to be done sometime this week"),
-            Priority::Sometime => String::from("Sometime in the future"),
-        }
+impl Display for Task {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "ID: {}, Task: {}", self.id, self.message)
     }
 }

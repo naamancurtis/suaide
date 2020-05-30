@@ -7,7 +7,8 @@ use std::fs::{create_dir, File};
 use std::io::prelude::*;
 use std::io::{BufReader, ErrorKind};
 
-use crate::task::{Priority, Task};
+use crate::enums::*;
+use crate::task::Task;
 
 const DATA_DIR: &str = "./.task-tracker";
 const DATA_PATH: &str = "./.task-tracker/data.json";
@@ -78,6 +79,23 @@ impl Data {
         }
 
         Ok(())
+    }
+
+    pub fn list_todos(&self, output: Output, priority: Vec<Priority>) {
+        use colored::*;
+
+        if output == Output::Terminal {
+            priority.into_iter().for_each(|p| {
+                if let Some(tasks) = self.open.get(&p) {
+                    if tasks.len() > 0 {
+                        println!("======================================================");
+                        println!("{}", p.to_string().color("yellow").bold());
+                        println!("======================================================");
+                        tasks.iter().for_each(|task| println!("{}", task));
+                    }
+                }
+            })
+        }
     }
 }
 
