@@ -6,12 +6,12 @@ use std::fs;
 use std::fs::{create_dir, File};
 use std::io::prelude::*;
 use std::io::{BufReader, ErrorKind};
+use std::path::PathBuf;
 
 use crate::enums::*;
 use crate::task::Task;
 
-const DATA_DIR: &str = "./.task-tracker";
-const DATA_PATH: &str = "./.task-tracker/data.json";
+const DEFAULT_PATH: PathBuf = PathBuf::from(r"$HOME/.suaide");
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Data {

@@ -12,7 +12,7 @@ pub enum Priority {
 impl ToString for Priority {
     fn to_string(&self) -> String {
         match self {
-            Priority::Critical => String::from("Absolultely Critical"),
+            Priority::Critical => String::from("Absolutely Critical"),
             Priority::Today => String::from("Needs to be done today"),
             Priority::Week => String::from("Needs to be done sometime this week"),
             Priority::Sometime => String::from("Sometime in the future"),
@@ -32,18 +32,9 @@ impl From<&str> for Priority {
     }
 }
 
-#[derive(Debug, Eq, Ord, PartialOrd, PartialEq)]
-pub enum Output {
-    Terminal,
-    Clipboard,
-}
-
-impl From<&str> for Output {
-    fn from(s: &str) -> Self {
-        match s {
-            "t" | "terminal" => Output::Terminal,
-            "cb" | "clipboard" => Output::Clipboard,
-            _ => panic!("wrong str passed to enum"),
-        }
-    }
+#[derive(Debug, Serialize, Deserialize, Eq, Ord, PartialOrd, PartialEq, Hash, Copy, Clone)]
+pub enum Status {
+    Open,
+    InProgress,
+    Closed,
 }
