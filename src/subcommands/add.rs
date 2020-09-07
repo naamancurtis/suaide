@@ -1,7 +1,8 @@
 use crate::schema::suaide;
 use chrono::Local;
 use clap::{App, Arg, ArgMatches};
-use std::io::{stdin, Read};
+use colored::Colorize;
+use std::io::stdin;
 
 use diesel::prelude::*;
 use diesel::Insertable;
@@ -31,12 +32,11 @@ pub fn app() -> App<'static> {
                 .long("desc")
                 .short('d')
                 .about("Description")
-                .required(true)
                 .takes_value(true),
         )
 }
 
-pub fn add(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), SuaideError> {
+pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), SuaideError> {
     let description: String;
     let ticket: Option<String>;
 
@@ -61,23 +61,25 @@ pub fn add(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Suaide
     let _ = diesel::insert_into(suaide::table)
         .values(&task)
         .execute(&db_conn)?;
-    println!("Added Task: {}", task.description);
+    println!("{}: {}", "Added task".green(), task.description);
     Ok(())
 }
 
 fn grab_input_from_user() -> Result<(String, Option<String>), SuaideError> {
     let mut description = String::new();
-    println!("Enter your task description");
+
+    println!("{}", "Enter your task description".italic());
     stdin().read_line(&mut description).unwrap();
     description = description
         .strip_suffix("\n")
         .ok_or_else(|| SuaideError::IncorrectArgs)?
         .to_string();
-    println!("Add a ticket number? (press 'n' to skip)");
+
+    println!("Add a ticket number? {}", "(press 'n' to skip)".italic());
     let mut temp_string = String::new();
     let mut ticket = None;
     stdin().read_line(&mut temp_string).unwrap();
-    if temp_string != "n\n".to_string() {
+    if temp_string != "n\n" {
         ticket = Some(
             temp_string
                 .strip_suffix("\n")
@@ -85,5 +87,6 @@ fn grab_input_from_user() -> Result<(String, Option<String>), SuaideError> {
                 .to_string(),
         );
     }
+
     Ok((description, ticket))
 }

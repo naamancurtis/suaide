@@ -50,6 +50,14 @@ impl Task {
         }
         Status::Open
     }
+
+    pub fn list(&self) {
+        let ticket = match &self.ticket {
+            Some(ticket) => ticket,
+            None => "",
+        };
+        println!("[{}] {}: {}", self.status(), ticket, self.description);
+    }
 }
 
 // Private API

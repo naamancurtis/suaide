@@ -1,14 +1,10 @@
 #[macro_use]
 extern crate diesel;
 
-use crate::enums::Priority;
-use clap::{App, Arg};
+use clap::App;
 use diesel::prelude::*;
 use errors::SuaideError;
-use schema::*;
-use std::collections::HashSet;
 use std::env;
-use std::error::Error;
 use subcommands::*;
 
 mod enums;
@@ -24,7 +20,7 @@ fn main() -> Result<(), SuaideError> {
         .about("A simple cli app to track tasks and auto-generate stand-up reports")
         .subcommand(add::app())
         .subcommand(App::new("edit").about("Edit an existing task"))
-        .subcommand(App::new("list").about("List tasks"))
+        .subcommand(list::app())
         .subcommand(App::new("remove").about("Delete a task"))
         .subcommand(App::new("done").about("Mark a task as done"))
         .subcommand(App::new("toggle").about("Toggle the state of a task"))
@@ -35,7 +31,8 @@ fn main() -> Result<(), SuaideError> {
     let conn = SqliteConnection::establish(&db_url)?;
 
     match matches.subcommand() {
-        ("add", Some(matches)) => add::add(matches, conn),
+        ("add", Some(matches)) => add::handler(matches, conn),
+        ("list", Some(matches)) => list::handler(matches, conn),
         _ => Err(SuaideError::SubCommandNotFound),
     }
 }

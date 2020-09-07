@@ -13,4 +13,7 @@ pub enum SuaideError {
 
     #[error(transparent)]
     StorageError(#[from] diesel::result::Error),
+
+    #[error(transparent)]
+    ArgumentFormatError(#[from] chrono::ParseError),
 }
