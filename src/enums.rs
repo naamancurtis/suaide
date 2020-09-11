@@ -44,11 +44,11 @@ pub enum Status {
 impl fmt::Display for Status {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let text = match self {
-            Status::Open => "Open".green(),
-            Status::InProgress => "In Progress".blue(),
-            Status::Closed => "Completed".magenta(),
+            Status::Open => "Open".truecolor(152, 195, 121),
+            Status::InProgress => "In Progress".truecolor(97, 175, 239),
+            Status::Closed => "Completed".truecolor(243, 147, 140),
         };
-        write!(f, "{}", text)
+        write!(f, "{}", text.bold())
     }
 }
 

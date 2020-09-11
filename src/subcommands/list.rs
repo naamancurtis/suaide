@@ -61,13 +61,14 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
     };
 
     use crate::schema::suaide::dsl::*;
-    let results = suaide
+    let mut results = suaide
         .filter(opened.gt(start))
         .or_filter(closed.gt(start))
         .filter(opened.lt(end))
         .or_filter(closed.lt(end))
         .order_by(closed.asc())
         .load::<Task>(&db_conn)?;
+    results.sort();
     results.iter().for_each(|result| result.list());
     Ok(())
 }
@@ -80,7 +81,7 @@ fn calculate_duration_from_timeframe(timeframe: Timeframe) -> (i64, i64) {
         Timeframe::Today => (now.and_hms(0, 0, 1).timestamp(), now_i64),
         Timeframe::Yesterday => (
             (now.and_hms(0, 0, 1) - Duration::days(1)).timestamp(),
-            now_i64,
+            (now.and_hms(23, 59, 59) - Duration::days(1)).timestamp(),
         ),
         Timeframe::Week => (
             Local

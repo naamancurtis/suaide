@@ -1,11 +1,13 @@
 use crate::enums::Status;
 use chrono::prelude::*;
 // use chrono::{DateTime, Datelike, Local, NaiveDateTime};
+use colored::Colorize;
 use diesel::Queryable;
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 use std::fmt::{Display, Formatter};
 
-#[derive(Debug, Serialize, Deserialize, Queryable)]
+#[derive(Debug, Serialize, Deserialize, Queryable, Eq, PartialEq)]
 pub struct Task {
     id: i32,
     ticket: Option<String>,
@@ -53,10 +55,10 @@ impl Task {
 
     pub fn list(&self) {
         let ticket = match &self.ticket {
-            Some(ticket) => ticket,
-            None => "",
+            Some(ticket) => format!("{}:", ticket),
+            None => format!("{{#{}:}}", self.id.to_string().italic()),
         };
-        println!("[{}] {}: {}", self.status(), ticket, self.description);
+        println!("[{}] {} {}", self.status(), ticket, self.description);
     }
 }
 
@@ -75,6 +77,26 @@ impl Task {
             return false;
         }
         true
+    }
+}
+
+impl Ord for Task {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match self.status().cmp(&other.status()) {
+            Ordering::Greater => Ordering::Greater,
+            Ordering::Equal => match self.opened.cmp(&other.opened) {
+                Ordering::Greater => Ordering::Less,
+                Ordering::Equal => Ordering::Equal,
+                Ordering::Less => Ordering::Greater,
+            },
+            Ordering::Less => Ordering::Less,
+        }
+    }
+}
+
+impl PartialOrd for Task {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 
