@@ -1,8 +1,9 @@
 use crate::enums::Status;
+use crate::schema::suaide;
 use chrono::prelude::*;
 // use chrono::{DateTime, Datelike, Local, NaiveDateTime};
 use colored::Colorize;
-use diesel::Queryable;
+use diesel::{Identifiable, Queryable};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::fmt::{Display, Formatter};

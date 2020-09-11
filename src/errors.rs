@@ -8,6 +8,9 @@ pub enum SuaideError {
     #[error("Incorrect arguments passed")]
     IncorrectArgs,
 
+    #[error("Task not found")]
+    NotFound,
+
     #[error(transparent)]
     ConnectionError(#[from] diesel::result::ConnectionError),
 
