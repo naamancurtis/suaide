@@ -57,7 +57,7 @@ impl Task {
     pub fn list(&self) {
         let ticket = match &self.ticket {
             Some(ticket) => format!("{}:", ticket),
-            None => format!("{{#{}:}}", self.id.to_string().italic()),
+            None => format!("#{}:", self.id.to_string().italic()),
         };
         println!("[{}] {} {}", self.status(), ticket, self.description);
     }
