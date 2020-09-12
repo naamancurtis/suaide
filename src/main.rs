@@ -24,7 +24,7 @@ fn main() -> Result<(), SuaideError> {
         .subcommand(list::app())
         .subcommand(remove::app())
         .subcommand(close::app())
-        .subcommand(App::new("toggle").about("Toggle the state of a task"))
+        .subcommand(status::app())
         .subcommand(App::new("stand-up").about("Output stand-up report"))
         .get_matches();
 
@@ -37,6 +37,7 @@ fn main() -> Result<(), SuaideError> {
         ("remove", Some(matches)) => remove::handler(matches, conn),
         ("close", Some(matches)) => close::handler(matches, conn),
         ("edit", Some(matches)) => edit::handler(matches, conn),
+        ("status", Some(matches)) => status::handler(matches, conn),
         _ => Err(SuaideError::SubCommandNotFound),
     }
 }

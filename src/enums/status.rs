@@ -21,6 +21,17 @@ impl From<i16> for Status {
     }
 }
 
+impl From<&str> for Status {
+    fn from(s: &str) -> Self {
+        match s {
+            "open" | "o" => Status::Open,
+            "in-progress" | "inprogress" | "progress" | "ip" => Status::InProgress,
+            "closed" | "close" | "c" => Status::Closed,
+            _ => panic!("Invalid status"),
+        }
+    }
+}
+
 impl fmt::Display for Status {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let text = match self {

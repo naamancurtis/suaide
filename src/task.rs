@@ -18,14 +18,14 @@ pub struct Task {
     pub(crate) closed: Option<i64>,
 }
 
-#[derive(AsChangeset)]
+#[derive(AsChangeset, Default)]
 #[table_name = "suaide"]
 pub(crate) struct TaskChangeSet {
-    pub(crate) ticket: Option<String>,
-    pub(crate) description: String,
-    pub(crate) status: i16,
-    pub(crate) opened: i64,
-    pub(crate) closed: Option<i64>,
+    ticket: Option<Option<String>>,
+    description: Option<String>,
+    status: Option<i16>,
+    opened: Option<i64>,
+    closed: Option<Option<i64>>,
 }
 
 impl Task {
@@ -67,16 +67,6 @@ impl Task {
         };
         println!("[{}] {} {}", self.task_status(), ticket, self.description);
     }
-
-    pub fn into_changeset(&self) -> TaskChangeSet {
-        TaskChangeSet {
-            description: self.description.clone(),
-            ticket: self.ticket.clone(),
-            status: self.status,
-            opened: self.opened,
-            closed: self.closed.clone(),
-        }
-    }
 }
 
 // Private API
@@ -94,6 +84,32 @@ impl Task {
             return false;
         }
         true
+    }
+}
+
+impl TaskChangeSet {
+    pub(crate) fn set_description(&mut self, task: &Task, description: String) {
+        if task.description != description {
+            self.description = Some(description);
+        }
+    }
+
+    pub(crate) fn set_ticket(&mut self, task: &Task, ticket: Option<String>) {
+        if task.ticket != ticket {
+            self.ticket = Some(ticket);
+        }
+    }
+
+    pub(crate) fn set_status(&mut self, task: &Task, status: Status) {
+        if task.status != status as i16 {
+            self.status = Some(status as i16);
+        }
+    }
+
+    pub(crate) fn set_closed(&mut self, task: &Task, closed: Option<i64>) {
+        if task.closed != closed {
+            self.closed = Some(closed);
+        }
     }
 }
 

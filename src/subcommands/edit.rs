@@ -1,11 +1,12 @@
 use clap::{App, Arg, ArgMatches};
 
+use chrono::prelude::*;
 use diesel::prelude::*;
 
 use crate::common::{get_input, get_optional_input, get_state_input, get_task};
 use crate::enums::Status;
 use crate::errors::SuaideError;
-use crate::task::Task;
+use crate::task::{Task, TaskChangeSet};
 
 pub fn app() -> App<'static> {
     App::new("edit").about("Edit a task").arg(
@@ -17,10 +18,9 @@ pub fn app() -> App<'static> {
 }
 
 pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), SuaideError> {
-    if let Some(task) = matches.value_of("task") {
-        let mut task = get_task(task, &db_conn)?;
-        task = grab_input_from_user(task)?;
-        let change_set = task.into_changeset();
+    if let Some(task_id) = matches.value_of("task") {
+        let task = get_task(task_id, &db_conn)?;
+        let change_set = grab_input_from_user(&task)?;
 
         use crate::schema::suaide::dsl::*;
 
@@ -28,19 +28,27 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
             .set(change_set)
             .execute(&db_conn)?;
 
+        let task = get_task(task_id, &db_conn)?;
         task.print();
         return Ok(());
     }
     Err(SuaideError::IncorrectArgs)
 }
 
-fn grab_input_from_user(mut task: Task) -> Result<Task, SuaideError> {
-    task.description = get_input("description", Some(task.description))?;
-    task.ticket = get_optional_input("ID", task.ticket)?;
+fn grab_input_from_user(task: &Task) -> Result<TaskChangeSet, SuaideError> {
+    let mut change_set = TaskChangeSet::default();
+    let description = get_input("description", Some(task.description.clone()))?;
+    let ticket = get_optional_input("ID", task.ticket.clone())?;
     let status = get_state_input(task.status.into());
-    task.status = status as i16;
+
+    change_set.set_description(task, description);
+    change_set.set_ticket(task, ticket);
+    change_set.set_status(task, status);
     if task.closed.is_some() && status != Status::Closed {
-        task.closed = None;
+        change_set.set_closed(task, None);
     }
-    Ok(task)
+    if status == Status::Closed {
+        change_set.set_closed(task, Some(Local::now().timestamp()))
+    }
+    Ok(change_set)
 }
