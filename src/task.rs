@@ -54,7 +54,7 @@ impl Task {
         Status::Open
     }
 
-    pub fn list(&self) {
+    pub fn print(&self) {
         let ticket = match &self.ticket {
             Some(ticket) => format!("{}:", ticket),
             None => format!("#{}:", self.id.to_string().italic()),

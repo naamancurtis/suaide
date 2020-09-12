@@ -79,7 +79,7 @@ fn grab_input_from_user() -> Result<(String, Option<String>), SuaideError> {
     let mut temp_string = String::new();
     let mut ticket = None;
     stdin().read_line(&mut temp_string).unwrap();
-    if temp_string != "n\n" {
+    if temp_string != "n\n" && temp_string != "\n" {
         ticket = Some(
             temp_string
                 .strip_suffix("\n")

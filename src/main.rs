@@ -22,7 +22,7 @@ fn main() -> Result<(), SuaideError> {
         .subcommand(App::new("edit").about("Edit an existing task"))
         .subcommand(list::app())
         .subcommand(remove::app())
-        .subcommand(App::new("done").about("Mark a task as done"))
+        .subcommand(done::app())
         .subcommand(App::new("toggle").about("Toggle the state of a task"))
         .subcommand(App::new("stand-up").about("Output stand-up report"))
         .get_matches();
@@ -34,6 +34,7 @@ fn main() -> Result<(), SuaideError> {
         ("add", Some(matches)) => add::handler(matches, conn),
         ("list", Some(matches)) => list::handler(matches, conn),
         ("remove", Some(matches)) => remove::handler(matches, conn),
+        ("done", Some(matches)) => done::handler(matches, conn),
         _ => Err(SuaideError::SubCommandNotFound),
     }
 }

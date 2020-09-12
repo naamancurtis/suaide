@@ -69,7 +69,7 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
         .order_by(closed.asc())
         .load::<Task>(&db_conn)?;
     results.sort();
-    results.iter().for_each(|result| result.list());
+    results.iter().for_each(|result| result.print());
     Ok(())
 }
 
