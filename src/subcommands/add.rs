@@ -7,15 +7,8 @@ use std::io::stdin;
 use diesel::prelude::*;
 use diesel::Insertable;
 
+use crate::common::{get_input, get_optional_input};
 use crate::errors::SuaideError;
-
-#[derive(Insertable)]
-#[table_name = "suaide"]
-struct AddItemStruct {
-    ticket: Option<String>,
-    description: String,
-    opened: i64,
-}
 
 pub fn app() -> App<'static> {
     App::new("add")
@@ -52,12 +45,7 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
         ticket = result.1;
     }
 
-    let task = AddItemStruct {
-        description,
-        ticket,
-        opened: Local::now().timestamp(),
-    };
-
+    let task = AddTask::new(ticket, description);
     let _ = diesel::insert_into(suaide::table)
         .values(&task)
         .execute(&db_conn)?;
@@ -66,27 +54,27 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
 }
 
 fn grab_input_from_user() -> Result<(String, Option<String>), SuaideError> {
-    let mut description = String::new();
-
-    println!("{}", "Enter your task description".italic());
-    stdin().read_line(&mut description).unwrap();
-    description = description
-        .strip_suffix("\n")
-        .ok_or_else(|| SuaideError::IncorrectArgs)?
-        .to_string();
-
-    println!("Add a ticket number? {}", "(press 'n' to skip)".italic());
-    let mut temp_string = String::new();
-    let mut ticket = None;
-    stdin().read_line(&mut temp_string).unwrap();
-    if temp_string != "n\n" && temp_string != "\n" {
-        ticket = Some(
-            temp_string
-                .strip_suffix("\n")
-                .ok_or_else(|| SuaideError::IncorrectArgs)?
-                .to_string(),
-        );
-    }
-
+    let description = get_input("description", None)?;
+    let ticket = get_optional_input("ID", None)?;
     Ok((description, ticket))
+}
+
+#[derive(Insertable)]
+#[table_name = "suaide"]
+struct AddTask {
+    ticket: Option<String>,
+    description: String,
+    opened: i64,
+    status: i16,
+}
+
+impl AddTask {
+    pub fn new(ticket: Option<String>, description: String) -> Self {
+        Self {
+            ticket,
+            description,
+            opened: Local::now().timestamp(),
+            status: 0,
+        }
+    }
 }

@@ -19,4 +19,7 @@ pub enum SuaideError {
 
     #[error(transparent)]
     ArgumentFormatError(#[from] chrono::ParseError),
+
+    #[error(transparent)]
+    InputError(#[from] std::io::Error),
 }

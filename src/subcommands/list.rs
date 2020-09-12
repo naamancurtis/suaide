@@ -43,7 +43,6 @@ pub fn app() -> App<'static> {
 }
 
 pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), SuaideError> {
-    let status = matches.value_of("status").expect("has default value");
     let (start, end): (i64, i64);
     if let Some(duration_iter) = matches.values_of("duration") {
         let duration: Vec<&str> = duration_iter.collect();

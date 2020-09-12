@@ -3,13 +3,14 @@ use clap::{App, Arg, ArgMatches};
 
 use diesel::prelude::*;
 
+use crate::enums::Status;
 use crate::errors::SuaideError;
 
 pub fn app() -> App<'static> {
-    App::new("done").about("Mark a task as done").arg(
+    App::new("close").about("Mark a task as closed").arg(
         Arg::with_name("task")
             .index(1)
-            .about("Mark this task as done")
+            .about("Mark this task as closed")
             .takes_value(true),
     )
 }
@@ -23,9 +24,13 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
 
 fn update_task(task: &str, db_conn: &SqliteConnection) -> Result<(), SuaideError> {
     use crate::schema::suaide::dsl::*;
+    let update = (
+        closed.eq(Some(Local::now().timestamp())),
+        status.eq(Status::Closed as i16),
+    );
 
     if let Ok(result) = diesel::update(suaide.filter(ticket.eq(Some(task))))
-        .set(closed.eq(Some(Local::now().timestamp())))
+        .set(update)
         .execute(db_conn)
     {
         if result == 1 {
@@ -35,7 +40,7 @@ fn update_task(task: &str, db_conn: &SqliteConnection) -> Result<(), SuaideError
 
     if let Ok(num) = task.parse::<i32>() {
         if let Ok(result) = diesel::update(suaide.find(num))
-            .set(closed.eq(Some(Local::now().timestamp())))
+            .set(update)
             .execute(db_conn)
         {
             if result == 1 {

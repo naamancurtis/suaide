@@ -3,18 +3,29 @@ use crate::schema::suaide;
 use chrono::prelude::*;
 // use chrono::{DateTime, Datelike, Local, NaiveDateTime};
 use colored::Colorize;
-use diesel::{Identifiable, Queryable};
+use diesel::{AsChangeset, Queryable};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Serialize, Deserialize, Queryable, Eq, PartialEq)]
 pub struct Task {
-    id: i32,
-    ticket: Option<String>,
-    description: String,
-    opened: i64,
-    closed: Option<i64>,
+    pub(crate) id: i32,
+    pub(crate) ticket: Option<String>,
+    pub(crate) description: String,
+    pub(crate) status: i16,
+    pub(crate) opened: i64,
+    pub(crate) closed: Option<i64>,
+}
+
+#[derive(AsChangeset)]
+#[table_name = "suaide"]
+pub(crate) struct TaskChangeSet {
+    pub(crate) ticket: Option<String>,
+    pub(crate) description: String,
+    pub(crate) status: i16,
+    pub(crate) opened: i64,
+    pub(crate) closed: Option<i64>,
 }
 
 impl Task {
@@ -23,6 +34,7 @@ impl Task {
             id: 0,
             ticket,
             description,
+            status: 0,
             opened: Local::now().timestamp(),
             closed: None,
         }
@@ -44,14 +56,8 @@ impl Task {
         self.complete();
     }
 
-    pub fn status(&self) -> Status {
-        if self.is_complete() {
-            return Status::Closed;
-        }
-        if self.already_in_progress() {
-            return Status::InProgress;
-        }
-        Status::Open
+    pub fn task_status(&self) -> Status {
+        self.status.into()
     }
 
     pub fn print(&self) {
@@ -59,7 +65,17 @@ impl Task {
             Some(ticket) => format!("{}:", ticket),
             None => format!("#{}:", self.id.to_string().italic()),
         };
-        println!("[{}] {} {}", self.status(), ticket, self.description);
+        println!("[{}] {} {}", self.task_status(), ticket, self.description);
+    }
+
+    pub fn into_changeset(&self) -> TaskChangeSet {
+        TaskChangeSet {
+            description: self.description.clone(),
+            ticket: self.ticket.clone(),
+            status: self.status,
+            opened: self.opened,
+            closed: self.closed.clone(),
+        }
     }
 }
 
@@ -83,7 +99,7 @@ impl Task {
 
 impl Ord for Task {
     fn cmp(&self, other: &Self) -> Ordering {
-        match self.status().cmp(&other.status()) {
+        match self.task_status().cmp(&other.task_status()) {
             Ordering::Greater => Ordering::Greater,
             Ordering::Equal => match self.opened.cmp(&other.opened) {
                 Ordering::Greater => Ordering::Less,
@@ -103,7 +119,7 @@ impl PartialOrd for Task {
 
 impl Display for Task {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let prefix = match self.status() {
+        let prefix = match self.task_status() {
             Status::Open => "Start work on",
             Status::InProgress => "Continue with",
             Status::Closed => "Completed",

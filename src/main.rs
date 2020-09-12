@@ -7,6 +7,7 @@ use errors::SuaideError;
 use std::env;
 use subcommands::*;
 
+mod common;
 mod enums;
 mod errors;
 pub mod schema;
@@ -19,10 +20,10 @@ fn main() -> Result<(), SuaideError> {
         .author("Naaman C. <naaman.the.dev@gmail.com>")
         .about("A simple cli app to track tasks and auto-generate stand-up reports")
         .subcommand(add::app())
-        .subcommand(App::new("edit").about("Edit an existing task"))
+        .subcommand(edit::app())
         .subcommand(list::app())
         .subcommand(remove::app())
-        .subcommand(done::app())
+        .subcommand(close::app())
         .subcommand(App::new("toggle").about("Toggle the state of a task"))
         .subcommand(App::new("stand-up").about("Output stand-up report"))
         .get_matches();
@@ -34,7 +35,8 @@ fn main() -> Result<(), SuaideError> {
         ("add", Some(matches)) => add::handler(matches, conn),
         ("list", Some(matches)) => list::handler(matches, conn),
         ("remove", Some(matches)) => remove::handler(matches, conn),
-        ("done", Some(matches)) => done::handler(matches, conn),
+        ("close", Some(matches)) => close::handler(matches, conn),
+        ("edit", Some(matches)) => edit::handler(matches, conn),
         _ => Err(SuaideError::SubCommandNotFound),
     }
 }
