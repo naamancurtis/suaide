@@ -17,7 +17,7 @@ mod task;
 
 fn main() -> Result<(), SuaideError> {
     let matches = App::new("suaide")
-        .version("0.1")
+        .version("v0.1")
         .author("Naaman C. <naaman.the.dev@gmail.com>")
         .about("A simple cli app to track tasks and auto-generate stand-up reports")
         .subcommand(add::app())
