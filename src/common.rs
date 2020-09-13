@@ -51,7 +51,12 @@ pub(crate) fn get_optional_input(
 }
 
 pub(crate) fn get_state_input(existing_field: Status) -> Status {
-    let options = vec![Status::Open, Status::InProgress, Status::Closed];
+    let options = vec![
+        Status::Open,
+        Status::InProgress,
+        Status::Closed,
+        Status::Cancelled,
+    ];
     let option_text: Vec<String> = options.iter().map(|s| s.to_string()).collect();
     let current = options
         .iter()

@@ -1,12 +1,14 @@
 use crate::enums::Status;
 use crate::schema::suaide;
 use chrono::prelude::*;
-// use chrono::{DateTime, Datelike, Local, NaiveDateTime};
 use colored::Colorize;
 use diesel::{AsChangeset, Queryable};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::fmt::{Display, Formatter};
+use std::time::{Duration, UNIX_EPOCH};
+
+const DATE_FORMAT: &str = "%Y-%m-%d %H:%M";
 
 #[derive(Debug, Serialize, Deserialize, Queryable, Eq, PartialEq)]
 pub struct Task {
@@ -60,7 +62,22 @@ impl Task {
         self.status.into()
     }
 
-    pub fn print(&self) {
+    pub fn print(&self, verbose: bool) {
+        if verbose {
+            let ticket = match &self.ticket {
+                Some(ticket) => format!("{}:", ticket),
+                None => format!("#{}:", self.id.to_string().italic()),
+            };
+            println!("[{}] {} {}", self.task_status(), ticket, self.description);
+            println!(
+                "{:30} {}",
+                format!("Opened: {}", self.opened_to_string()),
+                format!("Closed: {}", self.closed_to_string())
+            );
+            println!();
+            return;
+        }
+
         let ticket = match &self.ticket {
             Some(ticket) => format!("{}:", ticket),
             None => format!("#{}:", self.id.to_string().italic()),
@@ -84,6 +101,22 @@ impl Task {
             return false;
         }
         true
+    }
+
+    fn opened_to_string(&self) -> String {
+        let d = UNIX_EPOCH + Duration::from_secs(self.opened as u64);
+        let date = DateTime::<Local>::from(d);
+        date.format(DATE_FORMAT).to_string()
+    }
+
+    fn closed_to_string(&self) -> String {
+        if let Some(closed) = self.closed {
+            let d = UNIX_EPOCH + Duration::from_secs(closed as u64);
+            let date = DateTime::<Local>::from(d);
+            date.format(DATE_FORMAT).to_string()
+        } else {
+            "".to_string()
+        }
     }
 }
 
@@ -130,19 +163,5 @@ impl Ord for Task {
 impl PartialOrd for Task {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
-    }
-}
-
-impl Display for Task {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let prefix = match self.task_status() {
-            Status::Open => "Start work on",
-            Status::InProgress => "Continue with",
-            Status::Closed => "Completed",
-        };
-        if let Some(ticket) = self.ticket.clone() {
-            return write!(f, "{} [{}] {}", prefix, ticket, self.description);
-        }
-        write!(f, "{} {}", prefix, self.description)
     }
 }

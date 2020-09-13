@@ -32,12 +32,21 @@ pub fn app() -> App<'static> {
                     "closed",
                     "close",
                     "c",
+                    "cancel",
+                    "cancelled",
                 ])
                 .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("verbose")
+                .long("verbose")
+                .short('v')
+                .about("Provide additional information about each task"),
         )
 }
 
 pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), SuaideError> {
+    let is_verbose = matches.is_present("verbose");
     if let Some(task_id) = matches.value_of("task") {
         let task = get_task(task_id, &db_conn)?;
         let change_set = if let Some(state) = matches.value_of("state") {
@@ -55,7 +64,7 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
             .execute(&db_conn)?;
 
         let task = get_task(task_id, &db_conn)?;
-        task.print();
+        task.print(is_verbose);
         return Ok(());
     }
     Err(SuaideError::IncorrectArgs)
@@ -67,7 +76,7 @@ fn generate_change_set(task: &Task, status: Status) -> Result<TaskChangeSet, Sua
     if task.closed.is_some() && status != Status::Closed {
         change_set.set_closed(task, None);
     }
-    if status == Status::Closed {
+    if status == Status::Closed || status == Status::Cancelled {
         change_set.set_closed(task, Some(Local::now().timestamp()))
     }
     Ok(change_set)

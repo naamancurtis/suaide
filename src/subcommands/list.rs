@@ -20,7 +20,7 @@ pub fn app() -> App<'static> {
                 .index(1)
                 .about("What timeframe would you like to list the tasks for?")
                 .default_value("today")
-                .possible_values(&["today", "yesterday", "week", "last-week", "month"])
+                .possible_values(&["today", "yesterday", "week", "last-week", "month", "all"])
                 .takes_value(true),
         )
         .arg(
@@ -28,6 +28,7 @@ pub fn app() -> App<'static> {
                 .long("duration")
                 .short('d')
                 .conflicts_with("timeframe")
+                .number_of_values(2)
                 .about("Search for tasks between a specified duration")
                 .takes_value(true),
         )
@@ -40,10 +41,17 @@ pub fn app() -> App<'static> {
                 .possible_values(&["open", "closed", "all"])
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("verbose")
+                .long("verbose")
+                .short('v')
+                .about("Provide additional information about each task"),
+        )
 }
 
 pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), SuaideError> {
-    let (start, end): (i64, i64);
+    let is_verbose = matches.is_present("verbose");
+    let (mut start, mut end): (i64, i64) = (0, Local::now().timestamp());
     if let Some(duration_iter) = matches.values_of("duration") {
         let duration: Vec<&str> = duration_iter.collect();
         if duration.len() != 2 {
@@ -53,13 +61,16 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
         start = result.0;
         end = result.1;
     } else {
-        let timeframe = matches.value_of("timeframe").expect("has default value");
-        let result = calculate_duration_from_timeframe(timeframe.into());
-        start = result.0;
-        end = result.1;
+        let tf = matches.value_of("timeframe").expect("has default value");
+        if tf != "all" {
+            let result = calculate_duration_from_timeframe(tf.into());
+            start = result.0;
+            end = result.1;
+        }
     };
 
     use crate::schema::suaide::dsl::*;
+
     let mut results = suaide
         .filter(opened.gt(start))
         .or_filter(closed.gt(start))
@@ -67,8 +78,9 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
         .or_filter(closed.lt(end))
         .order_by(closed.asc())
         .load::<Task>(&db_conn)?;
+
     results.sort();
-    results.iter().for_each(|result| result.print());
+    results.iter().for_each(|result| result.print(is_verbose));
     Ok(())
 }
 
@@ -113,13 +125,13 @@ fn calculate_duration_from_timeframe(timeframe: Timeframe) -> (i64, i64) {
 }
 
 fn calculate_duration_from_dates(from: &str, to: &str) -> Result<(i64, i64), SuaideError> {
-    let from = match Local.datetime_from_str(from, DATE_FORMAT) {
+    let from = match NaiveDate::parse_from_str(from, DATE_FORMAT) {
         Ok(r) => r,
-        Err(_) => Local.datetime_from_str(from, WRITTEN_DATE_FORMAT)?,
+        Err(_) => NaiveDate::parse_from_str(from, WRITTEN_DATE_FORMAT)?,
     };
-    let to = match Local.datetime_from_str(to, DATE_FORMAT) {
+    let to = match NaiveDate::parse_from_str(to, DATE_FORMAT) {
         Ok(r) => r,
-        Err(_) => Local.datetime_from_str(to, WRITTEN_DATE_FORMAT)?,
+        Err(_) => NaiveDate::parse_from_str(to, WRITTEN_DATE_FORMAT)?,
     };
     let from = Local
         .ymd(from.year(), from.month(), from.day())

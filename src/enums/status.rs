@@ -8,6 +8,7 @@ pub enum Status {
     Open,
     InProgress,
     Closed,
+    Cancelled,
 }
 
 impl From<i16> for Status {
@@ -16,6 +17,7 @@ impl From<i16> for Status {
             0 => Status::Open,
             1 => Status::InProgress,
             2 => Status::Closed,
+            3 => Status::Cancelled,
             _ => panic!("Invalid status"),
         }
     }
@@ -27,6 +29,7 @@ impl From<&str> for Status {
             "open" | "o" => Status::Open,
             "in-progress" | "inprogress" | "progress" | "ip" => Status::InProgress,
             "closed" | "close" | "c" => Status::Closed,
+            "cancel" | "cancelled" => Status::Cancelled,
             _ => panic!("Invalid status"),
         }
     }
@@ -38,6 +41,7 @@ impl fmt::Display for Status {
             Status::Open => "Open".green(),
             Status::InProgress => "In Progress".blue(),
             Status::Closed => "Completed".yellow(),
+            Status::Cancelled => "Cancelled".red().italic(),
         };
         write!(f, "{}", text.bold())
     }
