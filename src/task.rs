@@ -1,14 +1,13 @@
-use crate::enums::Status;
-use crate::schema::suaide;
 use chrono::prelude::*;
 use colored::Colorize;
 use diesel::{AsChangeset, Queryable};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
-use std::fmt::{Display, Formatter};
 use std::time::{Duration, UNIX_EPOCH};
 
-const DATE_FORMAT: &str = "%Y-%m-%d %H:%M";
+use crate::common::DATE_FORMAT;
+use crate::enums::Status;
+use crate::schema::suaide;
 
 #[derive(Debug, Serialize, Deserialize, Queryable, Eq, PartialEq)]
 pub struct Task {
@@ -31,33 +30,6 @@ pub(crate) struct TaskChangeSet {
 }
 
 impl Task {
-    pub fn new(description: String, ticket: Option<String>) -> Self {
-        Self {
-            id: 0,
-            ticket,
-            description,
-            status: 0,
-            opened: Local::now().timestamp(),
-            closed: None,
-        }
-    }
-
-    pub fn open(&mut self) {
-        self.closed = None;
-    }
-
-    pub fn complete(&mut self) {
-        self.closed = Some(Local::now().timestamp())
-    }
-
-    pub fn toggle(&mut self) {
-        if self.closed.is_some() {
-            self.closed = None;
-            return;
-        }
-        self.complete();
-    }
-
     pub fn task_status(&self) -> Status {
         self.status.into()
     }
@@ -70,7 +42,7 @@ impl Task {
             };
             println!("[{}] {} {}", self.task_status(), ticket, self.description);
             println!(
-                "{:30} {}",
+                "\t{:30} {}",
                 format!("Opened: {}", self.opened_to_string()),
                 format!("Closed: {}", self.closed_to_string())
             );
@@ -88,21 +60,6 @@ impl Task {
 
 // Private API
 impl Task {
-    fn is_complete(&self) -> bool {
-        self.closed.is_some()
-    }
-
-    fn already_in_progress(&self) -> bool {
-        let now = Local::now();
-        let opened: DateTime<Utc> =
-            DateTime::from_utc(NaiveDateTime::from_timestamp(self.opened, 0), Utc);
-        let opened: DateTime<Local> = DateTime::from(opened);
-        if opened.num_days_from_ce() == now.num_days_from_ce() {
-            return false;
-        }
-        true
-    }
-
     fn opened_to_string(&self) -> String {
         let d = UNIX_EPOCH + Duration::from_secs(self.opened as u64);
         let date = DateTime::<Local>::from(d);

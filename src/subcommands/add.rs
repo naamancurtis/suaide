@@ -2,12 +2,11 @@ use crate::schema::suaide;
 use chrono::Local;
 use clap::{App, Arg, ArgMatches};
 use colored::Colorize;
-use std::io::stdin;
 
 use diesel::prelude::*;
 use diesel::Insertable;
 
-use crate::common::{get_input, get_optional_input};
+use crate::common::inputs::{get_input, get_optional_input};
 use crate::errors::SuaideError;
 
 pub fn app() -> App<'static> {

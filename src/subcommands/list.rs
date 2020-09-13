@@ -3,12 +3,9 @@ use clap::{App, Arg, ArgMatches};
 
 use diesel::prelude::*;
 
-use crate::common::calculate_duration_from_timeframe;
+use crate::common::{time::calculate_duration_from_timeframe, DATE_INPUT_LONG, DATE_INPUT_SHORT};
 use crate::errors::SuaideError;
 use crate::task::Task;
-
-const DATE_FORMAT: &str = "%Y-%m-%d";
-const WRITTEN_DATE_FORMAT: &str = "%e %b %Y";
 
 pub fn app() -> App<'static> {
     App::new("list")
@@ -81,13 +78,13 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
 }
 
 fn calculate_duration_from_dates(from: &str, to: &str) -> Result<(i64, i64), SuaideError> {
-    let from = match NaiveDate::parse_from_str(from, DATE_FORMAT) {
+    let from = match NaiveDate::parse_from_str(from, DATE_INPUT_SHORT) {
         Ok(r) => r,
-        Err(_) => NaiveDate::parse_from_str(from, WRITTEN_DATE_FORMAT)?,
+        Err(_) => NaiveDate::parse_from_str(from, DATE_INPUT_LONG)?,
     };
-    let to = match NaiveDate::parse_from_str(to, DATE_FORMAT) {
+    let to = match NaiveDate::parse_from_str(to, DATE_INPUT_SHORT) {
         Ok(r) => r,
-        Err(_) => NaiveDate::parse_from_str(to, WRITTEN_DATE_FORMAT)?,
+        Err(_) => NaiveDate::parse_from_str(to, DATE_INPUT_LONG)?,
     };
     let from = Local
         .ymd(from.year(), from.month(), from.day())

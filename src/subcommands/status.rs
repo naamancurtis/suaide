@@ -3,7 +3,7 @@ use clap::{App, Arg, ArgMatches};
 use chrono::prelude::*;
 use diesel::prelude::*;
 
-use crate::common::{get_state_input, get_task};
+use crate::common::{inputs::get_state_input, storage::get_task};
 use crate::enums::Status;
 use crate::errors::SuaideError;
 use crate::task::{Task, TaskChangeSet};

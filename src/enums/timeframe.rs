@@ -1,7 +1,5 @@
-use colored::Colorize;
 use serde::{Deserialize, Serialize};
 use std::convert::From;
-use std::fmt;
 
 #[derive(Debug, Serialize, Deserialize, Eq, Ord, PartialOrd, PartialEq, Hash, Copy, Clone)]
 pub enum Timeframe {
