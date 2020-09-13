@@ -7,10 +7,11 @@ use errors::SuaideError;
 use std::env;
 use subcommands::*;
 
+pub mod schema;
+
 mod common;
 mod enums;
 mod errors;
-pub mod schema;
 mod subcommands;
 mod task;
 
@@ -25,7 +26,7 @@ fn main() -> Result<(), SuaideError> {
         .subcommand(remove::app())
         .subcommand(close::app())
         .subcommand(status::app())
-        .subcommand(App::new("stand-up").about("Output stand-up report"))
+        .subcommand(stand_up::app())
         .get_matches();
 
     let db_url = env::var("SUAIDE_DB_URL").unwrap_or_else(|_| "suaide.sqlite".to_string());
@@ -38,6 +39,7 @@ fn main() -> Result<(), SuaideError> {
         ("close", Some(matches)) => close::handler(matches, conn),
         ("edit", Some(matches)) => edit::handler(matches, conn),
         ("status", Some(matches)) => status::handler(matches, conn),
+        ("standup", Some(matches)) => stand_up::handler(matches, conn),
         _ => Err(SuaideError::SubCommandNotFound),
     }
 }

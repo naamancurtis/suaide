@@ -1,11 +1,9 @@
 use chrono::prelude::*;
-use chrono::Duration;
 use clap::{App, Arg, ArgMatches};
-use colored::Colorize;
 
 use diesel::prelude::*;
 
-use crate::enums::Timeframe;
+use crate::common::calculate_duration_from_timeframe;
 use crate::errors::SuaideError;
 use crate::task::Task;
 
@@ -72,56 +70,14 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
     use crate::schema::suaide::dsl::*;
 
     let mut results = suaide
-        .filter(opened.gt(start))
-        .or_filter(closed.gt(start))
-        .filter(opened.lt(end))
-        .or_filter(closed.lt(end))
+        .filter(opened.between(start, end))
+        .or_filter(closed.between(start, end))
         .order_by(closed.asc())
         .load::<Task>(&db_conn)?;
 
     results.sort();
     results.iter().for_each(|result| result.print(is_verbose));
     Ok(())
-}
-
-fn calculate_duration_from_timeframe(timeframe: Timeframe) -> (i64, i64) {
-    let base_date = Local::now().date();
-    let now = Local.ymd(base_date.year(), base_date.month(), base_date.day());
-    let now_i64 = now.and_hms(23, 59, 59).timestamp();
-    match timeframe {
-        Timeframe::Today => (now.and_hms(0, 0, 1).timestamp(), now_i64),
-        Timeframe::Yesterday => (
-            (now.and_hms(0, 0, 1) - Duration::days(1)).timestamp(),
-            (now.and_hms(23, 59, 59) - Duration::days(1)).timestamp(),
-        ),
-        Timeframe::Week => (
-            Local
-                .isoywd(base_date.year(), base_date.iso_week().week(), Weekday::Mon)
-                .and_hms(0, 0, 1)
-                .timestamp(),
-            now_i64,
-        ),
-        Timeframe::LastWeek => {
-            let iso_date = base_date - Duration::days(7);
-            (
-                Local
-                    .isoywd(iso_date.year(), iso_date.iso_week().week(), Weekday::Mon)
-                    .and_hms(0, 0, 1)
-                    .timestamp(),
-                Local
-                    .isoywd(iso_date.year(), iso_date.iso_week().week(), Weekday::Fri)
-                    .and_hms(23, 59, 59)
-                    .timestamp(),
-            )
-        }
-        Timeframe::Month => (
-            Local
-                .ymd(base_date.year(), base_date.month(), 1)
-                .and_hms(0, 0, 1)
-                .timestamp(),
-            now_i64,
-        ),
-    }
 }
 
 fn calculate_duration_from_dates(from: &str, to: &str) -> Result<(i64, i64), SuaideError> {
