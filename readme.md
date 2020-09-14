@@ -1,13 +1,13 @@
-# Suaide _(Stand-Up Aide)_
+# suaide
 
-A simple CLI App written purely in Rust to help with the management of todos & tasks within the terminal,
+_[Stand-Up Aide]_ A simple CLI App written purely in Rust to help with the management of todos & tasks within the terminal,
 with the added functionality to output a stand-up style report.
 
 ## Requirements
 
 Under the hood this uses `SQLite 3` for storage, _(included in most MacOS
 distributions)_. If your system doesn't have it installed you'll need to install
-a recent version of it _(this was developed on 3.28.0)_.
+a recent version of it _(this was developed on `SQLite v3.28.0`)_.
 
 ## Basic API
 

@@ -1,4 +1,3 @@
-use crate::schema::suaide;
 use chrono::Local;
 use clap::{App, Arg, ArgMatches};
 use colored::Colorize;
@@ -8,6 +7,7 @@ use diesel::Insertable;
 
 use crate::common::inputs::{get_input, get_optional_input};
 use crate::errors::SuaideError;
+use crate::schema::suaide;
 
 pub fn app() -> App<'static> {
     App::new("add")

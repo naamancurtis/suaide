@@ -58,7 +58,7 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
     } else {
         let tf = matches.value_of("timeframe").expect("has default value");
         if tf != "all" {
-            let result = calculate_duration_from_timeframe(tf.into());
+            let result = calculate_duration_from_timeframe(Local::now().date(), tf.into());
             start = result.0;
             end = result.1;
         }

@@ -1,3 +1,4 @@
+use chrono::Local;
 use clap::{App, Arg, ArgMatches};
 use colored::Colorize;
 
@@ -21,7 +22,8 @@ pub fn app() -> App<'static> {
 
 pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), SuaideError> {
     let is_verbose = matches.is_present("verbose");
-    let (yesterday_start, yesterday_end) = calculate_duration_from_timeframe(Timeframe::Yesterday);
+    let (yesterday_start, yesterday_end) =
+        calculate_duration_from_timeframe(Local::now().date(), Timeframe::Yesterday);
 
     use crate::schema::suaide::dsl::*;
 
