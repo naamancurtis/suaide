@@ -4,8 +4,7 @@ use clap::{App, Arg, ArgMatches};
 use diesel::prelude::*;
 
 use crate::common::{time::calculate_duration_from_timeframe, DATE_INPUT_LONG, DATE_INPUT_SHORT};
-use crate::errors::SuaideError;
-use crate::task::Task;
+use crate::domain::{SuaideError, Task};
 
 pub fn app() -> App<'static> {
     App::new("list")

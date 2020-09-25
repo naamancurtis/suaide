@@ -5,4 +5,3 @@ pub mod list;
 pub mod remove;
 pub mod stand_up;
 pub mod status;
-pub mod toggle;

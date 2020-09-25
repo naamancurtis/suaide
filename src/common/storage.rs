@@ -1,7 +1,6 @@
 use diesel::prelude::*;
 
-use crate::errors::SuaideError;
-use crate::task::Task;
+use crate::domain::{SuaideError, Task};
 
 pub(crate) fn get_task(task: &str, db_conn: &SqliteConnection) -> Result<Task, SuaideError> {
     use crate::schema::suaide::dsl::*;

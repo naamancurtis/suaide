@@ -7,9 +7,7 @@ use crate::common::{
     inputs::{get_input, get_optional_input, get_state_input},
     storage::get_task,
 };
-use crate::enums::Status;
-use crate::errors::SuaideError;
-use crate::task::{Task, TaskChangeSet};
+use crate::domain::{Status, SuaideError, Task, TaskChangeSet};
 
 pub fn app() -> App<'static> {
     App::new("edit")

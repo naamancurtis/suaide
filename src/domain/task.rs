@@ -6,7 +6,7 @@ use std::cmp::Ordering;
 use std::time::{Duration, UNIX_EPOCH};
 
 use crate::common::DATE_FORMAT;
-use crate::enums::Status;
+use crate::domain::Status;
 use crate::schema::suaide;
 
 #[derive(Debug, Serialize, Deserialize, Queryable, Eq, PartialEq)]

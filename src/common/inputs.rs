@@ -2,8 +2,7 @@ use colored::Colorize;
 use dialoguer::{Input, Select};
 
 use crate::common::{ADD_PREFIX, EDIT_PREFIX};
-use crate::enums::Status;
-use crate::errors::SuaideError;
+use crate::domain::{Status, SuaideError};
 
 pub(crate) fn get_input(key: &str, existing_field: Option<String>) -> Result<String, SuaideError> {
     let is_edit = existing_field.is_some();

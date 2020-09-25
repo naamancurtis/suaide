@@ -5,9 +5,7 @@ use colored::Colorize;
 use diesel::prelude::*;
 
 use crate::common::time::calculate_duration_from_timeframe;
-use crate::enums::{Status, Timeframe};
-use crate::errors::SuaideError;
-use crate::task::Task;
+use crate::domain::{Status, SuaideError, Task, Timeframe};
 
 pub fn app() -> App<'static> {
     App::new("standup")

@@ -4,7 +4,7 @@ use std::io::stdin;
 
 use diesel::prelude::*;
 
-use crate::errors::SuaideError;
+use crate::domain::SuaideError;
 
 pub fn app() -> App<'static> {
     App::new("remove")

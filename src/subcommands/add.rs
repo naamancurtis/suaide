@@ -6,7 +6,7 @@ use diesel::prelude::*;
 use diesel::Insertable;
 
 use crate::common::inputs::{get_input, get_optional_input};
-use crate::errors::SuaideError;
+use crate::domain::SuaideError;
 use crate::schema::suaide;
 
 pub fn app() -> App<'static> {
@@ -75,5 +75,15 @@ impl AddTask {
             opened: Local::now().timestamp(),
             status: 0,
         }
+    }
+}
+
+#[cfg(test)]
+mod app_test {
+    use super::app;
+
+    #[test]
+    fn builds_app() {
+        let app = app();
     }
 }

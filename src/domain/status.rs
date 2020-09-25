@@ -41,7 +41,7 @@ impl fmt::Display for Status {
             Status::Open => "Open".green(),
             Status::InProgress => "In Progress".blue(),
             Status::Closed => "Completed".yellow(),
-            Status::Cancelled => "Cancelled".red().italic(),
+            Status::Cancelled => "Cancelled".red(),
         };
         write!(f, "{}", text.bold())
     }

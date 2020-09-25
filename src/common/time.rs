@@ -1,48 +1,51 @@
 use chrono::prelude::*;
 use chrono::Duration;
 
-use crate::enums::Timeframe;
+use crate::domain::Timeframe;
 
 pub(crate) fn calculate_duration_from_timeframe(
     base_date: Date<Local>,
     timeframe: Timeframe,
 ) -> (i64, i64) {
-    let now = Local.ymd(base_date.year(), base_date.month(), base_date.day());
-    let now_i64 = now.and_hms(23, 59, 59).timestamp();
-    match timeframe {
-        Timeframe::Today => (now.and_hms(0, 0, 1).timestamp(), now_i64),
+    let base = Local.ymd(base_date.year(), base_date.month(), base_date.day());
+    let base_hms = base.and_hms(23, 59, 59);
+
+    let (start, end) = match timeframe {
+        Timeframe::Today => (base.and_hms(0, 0, 1), base_hms),
+
         Timeframe::Yesterday => (
-            (now.and_hms(0, 0, 1) - Duration::days(1)).timestamp(),
-            (now.and_hms(23, 59, 59) - Duration::days(1)).timestamp(),
+            base.and_hms(0, 0, 1) - Duration::days(1),
+            base.and_hms(23, 59, 59) - Duration::days(1),
         ),
+
         Timeframe::Week => (
             Local
                 .isoywd(base_date.year(), base_date.iso_week().week(), Weekday::Mon)
-                .and_hms(0, 0, 1)
-                .timestamp(),
-            now_i64,
+                .and_hms(0, 0, 1),
+            base_hms,
         ),
+
         Timeframe::LastWeek => {
             let iso_date = base_date - Duration::days(7);
             (
                 Local
                     .isoywd(iso_date.year(), iso_date.iso_week().week(), Weekday::Mon)
-                    .and_hms(0, 0, 1)
-                    .timestamp(),
+                    .and_hms(0, 0, 1),
                 Local
                     .isoywd(iso_date.year(), iso_date.iso_week().week(), Weekday::Fri)
-                    .and_hms(23, 59, 59)
-                    .timestamp(),
+                    .and_hms(23, 59, 59),
             )
         }
+
         Timeframe::Month => (
             Local
                 .ymd(base_date.year(), base_date.month(), 1)
-                .and_hms(0, 0, 1)
-                .timestamp(),
-            now_i64,
+                .and_hms(0, 0, 1),
+            base_hms,
         ),
-    }
+    };
+
+    (start.timestamp(), end.timestamp())
 }
 
 #[cfg(test)]

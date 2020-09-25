@@ -3,8 +3,7 @@ use clap::{App, Arg, ArgMatches};
 
 use diesel::prelude::*;
 
-use crate::enums::Status;
-use crate::errors::SuaideError;
+use crate::domain::{Status, SuaideError};
 
 pub fn app() -> App<'static> {
     App::new("close").about("Mark a task as closed").arg(
