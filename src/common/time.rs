@@ -1,7 +1,33 @@
 use chrono::prelude::*;
 use chrono::Duration;
 
-use crate::domain::Timeframe;
+use crate::{
+    common::{DATE_INPUT_LONG, DATE_INPUT_SHORT},
+    domain::{SuaideError, Timeframe},
+};
+
+pub(crate) fn calculate_duration_from_dates(
+    from: &str,
+    to: &str,
+) -> Result<(i64, i64), SuaideError> {
+    let from = match NaiveDate::parse_from_str(from, DATE_INPUT_SHORT) {
+        Ok(r) => r,
+        Err(_) => NaiveDate::parse_from_str(from, DATE_INPUT_LONG)?,
+    };
+    let to = match NaiveDate::parse_from_str(to, DATE_INPUT_SHORT) {
+        Ok(r) => r,
+        Err(_) => NaiveDate::parse_from_str(to, DATE_INPUT_LONG)?,
+    };
+    let from = Local
+        .ymd(from.year(), from.month(), from.day())
+        .and_hms(0, 0, 1)
+        .timestamp();
+    let to = Local
+        .ymd(to.year(), to.month(), to.day())
+        .and_hms(23, 59, 59)
+        .timestamp();
+    Ok((from, to))
+}
 
 pub(crate) fn calculate_duration_from_timeframe(
     base_date: Date<Local>,

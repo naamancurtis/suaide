@@ -77,13 +77,3 @@ impl AddTask {
         }
     }
 }
-
-#[cfg(test)]
-mod app_test {
-    use super::app;
-
-    #[test]
-    fn builds_app() {
-        let app = app();
-    }
-}

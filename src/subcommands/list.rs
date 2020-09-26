@@ -3,7 +3,7 @@ use clap::{App, Arg, ArgMatches};
 
 use diesel::prelude::*;
 
-use crate::common::{time::calculate_duration_from_timeframe, DATE_INPUT_LONG, DATE_INPUT_SHORT};
+use crate::common::time::{calculate_duration_from_dates, calculate_duration_from_timeframe};
 use crate::domain::{SuaideError, Task};
 
 pub fn app() -> App<'static> {
@@ -74,24 +74,4 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
     results.sort();
     results.iter().for_each(|result| result.print(is_verbose));
     Ok(())
-}
-
-fn calculate_duration_from_dates(from: &str, to: &str) -> Result<(i64, i64), SuaideError> {
-    let from = match NaiveDate::parse_from_str(from, DATE_INPUT_SHORT) {
-        Ok(r) => r,
-        Err(_) => NaiveDate::parse_from_str(from, DATE_INPUT_LONG)?,
-    };
-    let to = match NaiveDate::parse_from_str(to, DATE_INPUT_SHORT) {
-        Ok(r) => r,
-        Err(_) => NaiveDate::parse_from_str(to, DATE_INPUT_LONG)?,
-    };
-    let from = Local
-        .ymd(from.year(), from.month(), from.day())
-        .and_hms(0, 0, 1)
-        .timestamp();
-    let to = Local
-        .ymd(to.year(), to.month(), to.day())
-        .and_hms(23, 59, 59)
-        .timestamp();
-    Ok((from, to))
 }

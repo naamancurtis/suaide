@@ -55,16 +55,17 @@ fn confirm_and_delete_all(db_conn: &SqliteConnection) -> Result<(), SuaideError>
 
 fn delete_single_task(task: &str, db_conn: &SqliteConnection) -> Result<(), SuaideError> {
     use crate::schema::suaide::dsl::*;
+
     if let Ok(result) = diesel::delete(suaide.filter(ticket.eq(Some(task)))).execute(db_conn) {
         if result == 1 {
-            println!("[{}]: Task {}", "Removed".truecolor(224, 108, 117), task);
+            println!("[{}]: Task {}", "Removed".red(), task);
             return Ok(());
         }
     }
     if let Ok(num) = task.parse::<i32>() {
         if let Ok(result) = diesel::delete(suaide.find(num)).execute(db_conn) {
             if result == 1 {
-                println!("[{}]: Task #{}", "Removed".truecolor(224, 108, 117), task);
+                println!("[{}]: Task #{}", "Removed".red(), task);
                 return Ok(());
             }
         }

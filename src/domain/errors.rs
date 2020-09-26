@@ -22,4 +22,7 @@ pub enum SuaideError {
 
     #[error(transparent)]
     InputError(#[from] std::io::Error),
+
+    #[error(transparent)]
+    MigrationError(#[from] diesel_migrations::RunMigrationsError),
 }

@@ -1,23 +1,26 @@
 #[macro_use]
 extern crate diesel;
+#[macro_use]
+extern crate diesel_migrations;
+
+use diesel_migrations::embed_migrations;
 
 use app::{build_app, handle_matches};
-use diesel::prelude::*;
+use database::establish_connection;
 use domain::SuaideError;
-use std::env;
 
-pub mod schema;
+mod schema;
 
 mod app;
 mod common;
+mod database;
 mod domain;
 mod subcommands;
 
+embed_migrations!();
+
 fn main() -> Result<(), SuaideError> {
     let app = build_app();
-
-    let db_url = env::var("SUAIDE_DB_URL").unwrap_or_else(|_| "suaide.sqlite".to_string());
-    let conn = SqliteConnection::establish(&db_url)?;
-
+    let conn = establish_connection()?;
     handle_matches(app.get_matches(), conn)
 }

@@ -1,5 +1,6 @@
 use chrono::prelude::*;
 use clap::{App, Arg, ArgMatches};
+use colored::Colorize;
 
 use diesel::prelude::*;
 
@@ -33,6 +34,7 @@ fn update_task(task: &str, db_conn: &SqliteConnection) -> Result<(), SuaideError
         .execute(db_conn)
     {
         if result == 1 {
+            println!("[{}]: {}", "Completed".yellow(), task);
             return Ok(());
         }
     }
@@ -43,6 +45,7 @@ fn update_task(task: &str, db_conn: &SqliteConnection) -> Result<(), SuaideError
             .execute(db_conn)
         {
             if result == 1 {
+                println!("[{}]: {}", "Completed".yellow(), task);
                 return Ok(());
             }
         }
