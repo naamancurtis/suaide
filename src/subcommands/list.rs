@@ -5,6 +5,7 @@ use diesel::prelude::*;
 
 use crate::common::time::{calculate_duration_from_dates, calculate_duration_from_timeframe};
 use crate::domain::{SuaideError, Task};
+use crate::state::State;
 
 pub fn app() -> App<'static> {
     App::new("list")
@@ -48,7 +49,7 @@ pub fn app() -> App<'static> {
         )
 }
 
-pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), SuaideError> {
+pub fn handler(matches: &ArgMatches, state: &State) -> Result<(), SuaideError> {
     let is_verbose = matches.is_present("verbose");
     let (mut start, mut end): (i64, i64) = (0, Local::now().timestamp());
     if let Some(duration_iter) = matches.values_of("duration") {
@@ -74,7 +75,7 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
         .filter(opened.between(start, end))
         .or_filter(closed.between(start, end))
         .order_by(closed.asc())
-        .load::<Task>(&db_conn)?;
+        .load::<Task>(state.get_conn())?;
 
     results.sort();
     results.iter().for_each(|result| result.print(is_verbose));

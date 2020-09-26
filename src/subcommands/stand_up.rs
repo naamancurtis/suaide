@@ -6,6 +6,7 @@ use diesel::prelude::*;
 
 use crate::common::time::calculate_duration_from_timeframe;
 use crate::domain::{Status, SuaideError, Task, Timeframe};
+use crate::state::State;
 
 pub fn app() -> App<'static> {
     App::new("standup")
@@ -18,7 +19,7 @@ pub fn app() -> App<'static> {
         )
 }
 
-pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), SuaideError> {
+pub fn handler(matches: &ArgMatches, state: &State) -> Result<(), SuaideError> {
     let is_verbose = matches.is_present("verbose");
     let (yesterday_start, yesterday_end) =
         calculate_duration_from_timeframe(Local::now().date(), Timeframe::Yesterday);
@@ -27,14 +28,14 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
 
     let mut today = suaide
         .filter(status.le(Status::InProgress as i16))
-        .load::<Task>(&db_conn)?;
+        .load::<Task>(state.get_conn())?;
 
     let mut yesterday = suaide
         .filter(status.eq(Status::Closed as i16))
         .filter(closed.between(yesterday_start, yesterday_end))
         .or_filter(status.eq(Status::InProgress as i16))
         .filter(opened.lt(yesterday_end))
-        .load::<Task>(&db_conn)?;
+        .load::<Task>(state.get_conn())?;
 
     yesterday.sort();
     today.sort();

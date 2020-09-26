@@ -7,6 +7,7 @@ use crate::common::{
     storage::get_task,
 };
 use crate::domain::{SuaideError, Task, TaskChangeSet};
+use crate::state::State;
 
 pub fn app() -> App<'static> {
     App::new("edit")
@@ -26,29 +27,30 @@ pub fn app() -> App<'static> {
         )
 }
 
-pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), SuaideError> {
+pub fn handler(matches: &ArgMatches, state: &State) -> Result<(), SuaideError> {
     let is_verbose = matches.is_present("verbose");
     if let Some(task_id) = matches.value_of("task") {
-        let task = get_task(task_id, &db_conn)?;
-        let change_set = grab_input_from_user(&task)?;
+        let task_id = state.generate_ticket_id(Some(task_id)).unwrap();
+        let task = get_task(&task_id, state.get_conn())?;
+        let change_set = grab_input_from_user(&task, state)?;
 
         use crate::schema::suaide::dsl::suaide;
 
         diesel::update(suaide.find(task.id))
             .set(change_set)
-            .execute(&db_conn)?;
+            .execute(state.get_conn())?;
 
-        let task = get_task(task_id, &db_conn)?;
+        let task = get_task(&task_id, state.get_conn())?;
         task.print(is_verbose);
         return Ok(());
     }
     Err(SuaideError::IncorrectArgs)
 }
 
-fn grab_input_from_user(task: &Task) -> Result<TaskChangeSet, SuaideError> {
+fn grab_input_from_user(task: &Task, state: &State) -> Result<TaskChangeSet, SuaideError> {
     let mut change_set = TaskChangeSet::default();
     let description = get_input("description", Some(task.description.clone()))?;
-    let ticket = get_optional_input("ID", task.ticket.clone())?;
+    let ticket = state.generate_ticket_id(get_optional_input("ID", task.ticket.clone())?);
     let status = get_state_input(task.status.into());
 
     change_set.set_description(task, description);

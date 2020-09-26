@@ -4,6 +4,7 @@ use diesel::prelude::*;
 
 use crate::common::{inputs::get_state_input, storage::get_task};
 use crate::domain::{Status, SuaideError, Task, TaskChangeSet};
+use crate::state::State;
 
 pub fn app() -> App<'static> {
     App::new("status")
@@ -42,10 +43,11 @@ pub fn app() -> App<'static> {
         )
 }
 
-pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), SuaideError> {
+pub fn handler(matches: &ArgMatches, state: &State) -> Result<(), SuaideError> {
     let is_verbose = matches.is_present("verbose");
     if let Some(task_id) = matches.value_of("task") {
-        let task = get_task(task_id, &db_conn)?;
+        let task_id = state.generate_ticket_id(Some(task_id)).unwrap();
+        let task = get_task(&task_id, state.get_conn())?;
         let change_set = if let Some(state) = matches.value_of("state") {
             let updated_status = Status::from(state);
             generate_change_set(&task, updated_status)?
@@ -58,9 +60,9 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
 
         diesel::update(suaide.find(task.id))
             .set(change_set)
-            .execute(&db_conn)?;
+            .execute(state.get_conn())?;
 
-        let task = get_task(task_id, &db_conn)?;
+        let task = get_task(&task_id, state.get_conn())?;
         task.print(is_verbose);
         return Ok(());
     }

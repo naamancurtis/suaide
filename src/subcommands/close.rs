@@ -5,6 +5,7 @@ use colored::Colorize;
 use diesel::prelude::*;
 
 use crate::domain::{Status, SuaideError};
+use crate::state::State;
 
 pub fn app() -> App<'static> {
     App::new("close").about("Mark a task as closed").arg(
@@ -16,14 +17,14 @@ pub fn app() -> App<'static> {
     )
 }
 
-pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), SuaideError> {
+pub fn handler(matches: &ArgMatches, state: &State) -> Result<(), SuaideError> {
     if let Some(task) = matches.value_of("task") {
-        return update_task(task, &db_conn);
+        return update_task(task, state);
     }
     Err(SuaideError::IncorrectArgs)
 }
 
-fn update_task(task: &str, db_conn: &SqliteConnection) -> Result<(), SuaideError> {
+fn update_task(task: &str, state: &State) -> Result<(), SuaideError> {
     use crate::schema::suaide::dsl::{closed, status, suaide, ticket};
 
     let update = (
@@ -31,9 +32,10 @@ fn update_task(task: &str, db_conn: &SqliteConnection) -> Result<(), SuaideError
         status.eq(Status::Closed as i16),
     );
 
-    if let Ok(result) = diesel::update(suaide.filter(ticket.eq(Some(task))))
-        .set(update)
-        .execute(db_conn)
+    if let Ok(result) =
+        diesel::update(suaide.filter(ticket.eq(state.generate_ticket_id(Some(task)))))
+            .set(update)
+            .execute(state.get_conn())
     {
         if result == 1 {
             println!("[{}]: {}", "Completed".yellow(), task);
@@ -44,7 +46,7 @@ fn update_task(task: &str, db_conn: &SqliteConnection) -> Result<(), SuaideError
     if let Ok(num) = task.parse::<i32>() {
         if let Ok(result) = diesel::update(suaide.find(num))
             .set(update)
-            .execute(db_conn)
+            .execute(state.get_conn())
         {
             if result == 1 {
                 println!("[{}]: {}", "Completed".yellow(), task);

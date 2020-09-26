@@ -5,6 +5,7 @@ use dialoguer::Confirm;
 use diesel::prelude::*;
 
 use crate::domain::SuaideError;
+use crate::state::State;
 
 pub fn app() -> App<'static> {
     App::new("remove")
@@ -25,13 +26,14 @@ pub fn app() -> App<'static> {
         )
 }
 
-pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), SuaideError> {
+pub fn handler(matches: &ArgMatches, state: &State) -> Result<(), SuaideError> {
     if matches.is_present("all") {
-        return confirm_and_delete_all(&db_conn);
+        return confirm_and_delete_all(state.get_conn());
     }
 
     if let Some(task) = matches.value_of("task") {
-        return delete_single_task(task, &db_conn);
+        let task = state.generate_ticket_id(Some(task)).unwrap();
+        return delete_single_task(&task, state.get_conn());
     }
     Err(SuaideError::IncorrectArgs)
 }

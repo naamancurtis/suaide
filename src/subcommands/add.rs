@@ -6,6 +6,7 @@ use diesel::prelude::*;
 use diesel::Insertable;
 
 use crate::common::inputs::{get_input, get_optional_input};
+use crate::state::State;
 use crate::domain::SuaideError;
 use crate::schema::suaide;
 
@@ -28,7 +29,7 @@ pub fn app() -> App<'static> {
         )
 }
 
-pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), SuaideError> {
+pub fn handler(matches: &ArgMatches, state: &State) -> Result<(), SuaideError> {
     let description: String;
     let ticket: Option<String>;
 
@@ -37,17 +38,17 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
             .value_of("description")
             .map(String::from)
             .expect("already checked string");
-        ticket = matches.value_of("ticket_id").map(String::from);
+        ticket = state.generate_ticket_id(matches.value_of("ticket_id").map(String::from));
     } else {
         let result = grab_input_from_user()?;
         description = result.0;
-        ticket = result.1;
+        ticket = state.generate_ticket_id(result.1);
     }
 
     let task = AddTask::new(ticket, description);
     let _ = diesel::insert_into(suaide::table)
         .values(&task)
-        .execute(&db_conn)?;
+        .execute(state.get_conn())?;
     println!("{}: {}", "Added task".green(), task.description);
     Ok(())
 }

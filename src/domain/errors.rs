@@ -25,4 +25,7 @@ pub enum SuaideError {
 
     #[error(transparent)]
     MigrationError(#[from] diesel_migrations::RunMigrationsError),
+
+    #[error(transparent)]
+    ConfigError(#[from] config::ConfigError),
 }
