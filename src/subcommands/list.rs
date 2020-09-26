@@ -13,8 +13,9 @@ pub fn app() -> App<'static> {
             Arg::with_name("timeframe")
                 .index(1)
                 .about("What timeframe would you like to list the tasks for?")
+                .conflicts_with("duration")
                 .default_value("today")
-                .possible_values(&["today", "yesterday", "week", "last-week", "month", "all"])
+                .possible_values(&["today", "yesterday", "week", "lastweek", "month", "all"])
                 .takes_value(true),
         )
         .arg(
@@ -23,18 +24,22 @@ pub fn app() -> App<'static> {
                 .short('d')
                 .conflicts_with("timeframe")
                 .number_of_values(2)
-                .about("Search for tasks between a specified duration")
+                .next_line_help(true)
+                .long_about(
+                    "Search for all tasks between two dates. \nDates should be provided in one of the following formats \"YYYY-MM-DD\" or \"DD mmm YYYY\"\nExample: 2020-01-01 or 1 Jan 2020\n",
+                )
                 .takes_value(true),
         )
-        .arg(
-            Arg::with_name("status")
-                .long("status")
-                .short('s')
-                .about("Specify a status of the tasks you would like to list")
-                .default_value("all")
-                .possible_values(&["open", "closed", "all"])
-                .takes_value(true),
-        )
+        // @todo
+        // .arg(
+        //     Arg::with_name("status")
+        //         .long("status")
+        //         .short('s')
+        //         .about("Specify a status of the tasks you would like to list")
+        //         .default_value("all")
+        //         .possible_values(&["open", "closed", "all"])
+        //         .takes_value(true),
+        // )
         .arg(
             Arg::with_name("verbose")
                 .long("verbose")

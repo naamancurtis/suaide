@@ -16,7 +16,7 @@ impl From<&str> for Timeframe {
             "today" => Timeframe::Today,
             "yesterday" => Timeframe::Yesterday,
             "week" => Timeframe::Week,
-            "last-week" => Timeframe::LastWeek,
+            "lastweek" => Timeframe::LastWeek,
             "month" => Timeframe::Month,
             _ => panic!("unable to convert argument to timeframe"),
         }

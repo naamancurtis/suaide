@@ -75,7 +75,66 @@ pub(crate) fn calculate_duration_from_timeframe(
 }
 
 #[cfg(test)]
-mod test {
+mod test_from_dates {
+    use super::*;
+
+    #[test]
+    fn parses_from_short_input() {
+        let from = "2020-01-23";
+        let to = "2019-11-01";
+
+        let result = calculate_duration_from_dates(from, to);
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(
+            result.0,
+            Local.ymd(2020, 1, 23).and_hms(0, 0, 1).timestamp()
+        );
+        assert_eq!(
+            result.1,
+            Local.ymd(2019, 11, 1).and_hms(23, 59, 59).timestamp()
+        )
+    }
+
+    #[test]
+    fn parses_from_long_input() {
+        let from = "23 Jan 2020";
+        let to = "1 Nov 2019";
+
+        let result = calculate_duration_from_dates(from, to);
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(
+            result.0,
+            Local.ymd(2020, 1, 23).and_hms(0, 0, 1).timestamp()
+        );
+        assert_eq!(
+            result.1,
+            Local.ymd(2019, 11, 1).and_hms(23, 59, 59).timestamp()
+        )
+    }
+
+    #[test]
+    fn parses_from_long_input_with_full_months() {
+        let from = "23 January 2020";
+        let to = "1 November 2019";
+
+        let result = calculate_duration_from_dates(from, to);
+        assert!(result.is_ok());
+        let result = result.unwrap();
+        assert_eq!(
+            result.0,
+            Local.ymd(2020, 1, 23).and_hms(0, 0, 1).timestamp()
+        );
+        assert_eq!(
+            result.1,
+            Local.ymd(2019, 11, 1).and_hms(23, 59, 59).timestamp()
+        )
+    }
+}
+
+#[cfg(test)]
+mod test_from_timeframe {
     use super::*;
     use lazy_static::lazy_static;
 

@@ -10,7 +10,8 @@ pub fn app() -> App<'static> {
     App::new("close").about("Mark a task as closed").arg(
         Arg::with_name("task")
             .index(1)
-            .about("Mark this task as closed")
+            .about("The task to mark as closed")
+            .required(true)
             .takes_value(true),
     )
 }

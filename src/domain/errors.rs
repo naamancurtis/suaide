@@ -17,8 +17,8 @@ pub enum SuaideError {
     #[error(transparent)]
     StorageError(#[from] diesel::result::Error),
 
-    #[error(transparent)]
-    ArgumentFormatError(#[from] chrono::ParseError),
+    #[error("Expected date in either format DD MMM YYYY or YYYY-MM-DD")]
+    DateFormatError(#[from] chrono::ParseError),
 
     #[error(transparent)]
     InputError(#[from] std::io::Error),

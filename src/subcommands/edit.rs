@@ -15,7 +15,8 @@ pub fn app() -> App<'static> {
         .arg(
             Arg::with_name("task")
                 .index(1)
-                .about("Mark this task as closed")
+                .required(true)
+                .about("The task to edit")
                 .takes_value(true),
         )
         .arg(

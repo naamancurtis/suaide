@@ -12,7 +12,7 @@ pub fn app() -> App<'static> {
         .arg(
             Arg::with_name("task")
                 .index(1)
-                .about("Update the status of this task")
+                .about("The task to update")
                 .required(true)
                 .takes_value(true),
         )
