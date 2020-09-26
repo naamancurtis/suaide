@@ -24,11 +24,12 @@ impl Settings {
         s.set_default("db_url", DEFAULT_DB_PATH.as_ref())?;
         s.set_default("ticket_prefix", "")?;
 
+        let config_name =
+            shellexpand::tilde(&format!("{}/settings.yml", DEFAULT_SUAIDE_PATH.to_string()))
+                .to_string();
+
         // Read Config Settings
-        s.merge(
-            File::with_name(&format!("{}/settings.yml", DEFAULT_SUAIDE_PATH.to_string()))
-                .required(false),
-        )?;
+        s.merge(File::with_name(&config_name).required(false))?;
 
         // Overwrite with environment variables
         s.merge(Environment::with_prefix("SUAIDE"))?;
