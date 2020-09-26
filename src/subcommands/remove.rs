@@ -37,8 +37,10 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
 }
 
 fn confirm_and_delete_all(db_conn: &SqliteConnection) -> Result<(), SuaideError> {
-    use crate::schema::suaide::dsl::*;
+    use crate::schema::suaide::dsl::suaide;
+
     let mut confirmation = Confirm::new();
+    confirmation.default(false);
     if confirmation
         .with_prompt(format!(
             "{} {}",
@@ -54,7 +56,7 @@ fn confirm_and_delete_all(db_conn: &SqliteConnection) -> Result<(), SuaideError>
 }
 
 fn delete_single_task(task: &str, db_conn: &SqliteConnection) -> Result<(), SuaideError> {
-    use crate::schema::suaide::dsl::*;
+    use crate::schema::suaide::dsl::{suaide, ticket};
 
     if let Ok(result) = diesel::delete(suaide.filter(ticket.eq(Some(task)))).execute(db_conn) {
         if result == 1 {

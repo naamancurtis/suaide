@@ -93,6 +93,12 @@ impl TaskChangeSet {
     pub(crate) fn set_status(&mut self, task: &Task, status: Status) {
         if task.status != status as i16 {
             self.status = Some(status as i16);
+            match status {
+                Status::Closed | Status::Cancelled => {
+                    self.set_closed(task, Some(Local::now().timestamp()))
+                }
+                _ => self.set_closed(task, None),
+            };
         }
     }
 

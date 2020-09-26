@@ -1,13 +1,12 @@
 use clap::{App, Arg, ArgMatches};
 
-use chrono::prelude::*;
 use diesel::prelude::*;
 
 use crate::common::{
     inputs::{get_input, get_optional_input, get_state_input},
     storage::get_task,
 };
-use crate::domain::{Status, SuaideError, Task, TaskChangeSet};
+use crate::domain::{SuaideError, Task, TaskChangeSet};
 
 pub fn app() -> App<'static> {
     App::new("edit")
@@ -33,7 +32,7 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
         let task = get_task(task_id, &db_conn)?;
         let change_set = grab_input_from_user(&task)?;
 
-        use crate::schema::suaide::dsl::*;
+        use crate::schema::suaide::dsl::suaide;
 
         diesel::update(suaide.find(task.id))
             .set(change_set)
@@ -55,11 +54,5 @@ fn grab_input_from_user(task: &Task) -> Result<TaskChangeSet, SuaideError> {
     change_set.set_description(task, description);
     change_set.set_ticket(task, ticket);
     change_set.set_status(task, status);
-    if task.closed.is_some() && status != Status::Closed {
-        change_set.set_closed(task, None);
-    }
-    if status == Status::Closed || status == Status::Cancelled {
-        change_set.set_closed(task, Some(Local::now().timestamp()))
-    }
     Ok(change_set)
 }

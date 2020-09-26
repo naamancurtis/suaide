@@ -68,7 +68,7 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
         }
     };
 
-    use crate::schema::suaide::dsl::*;
+    use crate::schema::suaide::dsl::{closed, opened, suaide};
 
     let mut results = suaide
         .filter(opened.between(start, end))

@@ -24,7 +24,8 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
 }
 
 fn update_task(task: &str, db_conn: &SqliteConnection) -> Result<(), SuaideError> {
-    use crate::schema::suaide::dsl::*;
+    use crate::schema::suaide::dsl::{closed, status, suaide, ticket};
+
     let update = (
         closed.eq(Some(Local::now().timestamp())),
         status.eq(Status::Closed as i16),

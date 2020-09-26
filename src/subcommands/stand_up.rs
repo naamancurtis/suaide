@@ -23,7 +23,7 @@ pub fn handler(matches: &ArgMatches, db_conn: SqliteConnection) -> Result<(), Su
     let (yesterday_start, yesterday_end) =
         calculate_duration_from_timeframe(Local::now().date(), Timeframe::Yesterday);
 
-    use crate::schema::suaide::dsl::*;
+    use crate::schema::suaide::dsl::{closed, opened, status, suaide};
 
     let mut today = suaide
         .filter(status.le(Status::InProgress as i16))
