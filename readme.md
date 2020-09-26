@@ -1,6 +1,6 @@
 # suaide
 
-_[Stand-Up Aide]_ A simple CLI App written purely in Rust to help with the management of todos & tasks within the terminal,
+_[Stand-Up Aide]_ A lightweight 100% offline CLI App to help with the management of todos & tasks within the terminal,
 with the added functionality to output a stand-up style report.
 
 ## Requirements
@@ -23,7 +23,7 @@ a recent version of it _(this was developed on `SQLite v3.28.0`)_.
 
 ## Settings
 
-There are two options for defining settings for **suaide**: _(in order of
+There are two options for overwriting default settings for **suaide**: _(in order of
 precedence)_
 
 1. Environment variables prefixed with `SUAIDE_`
@@ -31,7 +31,20 @@ precedence)_
 
 ### Options
 
-| Setting         | Description                                                         | Default                   |
-| --------------- | ------------------------------------------------------------------- | ------------------------- |
-| `db_url`        | The path to the `.sqlite` file used as the database for the tasks   | `~/.suaide/suaide.sqlite` |
-| `ticket_prefix` | A prefix that will be automatically applied to any ticket id if set | `""`                      |
+| Setting         | Description                                                             | Default     |
+| --------------- | ----------------------------------------------------------------------- | ----------- |
+| `db_url`        | The path to the `suaide.sqlite` file used as the database for the tasks | `~/.suaide` |
+| `ticket_prefix` | A prefix that will be automatically applied to any ticket id if set     | `""`        |
+
+#### Example settings.yml
+
+```yml
+db_url: ~/code/todos
+ticket_prefix: TASK-
+```
+
+#### Example Environment Variables
+
+```
+SUAIDE_DB_URL="~/code/todos"
+```

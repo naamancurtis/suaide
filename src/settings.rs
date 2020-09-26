@@ -7,10 +7,8 @@ use std::path::Path;
 use crate::domain::SuaideError;
 
 lazy_static! {
-    static ref DEFAULT_SUAIDE_PATH: std::borrow::Cow<'static, str> =
-        shellexpand::tilde("~/.suaide");
-    static ref DEFAULT_DB_URL: std::borrow::Cow<'static, str> =
-        shellexpand::tilde("~/.suaide/suaide.sqlite");
+    static ref DEFAULT_SUAIDE_PATH: &'static str = "~/.suaide";
+    static ref DEFAULT_DB_PATH: &'static str = "~/.suaide/suaide.sqlite";
 }
 
 #[derive(Debug, Deserialize)]
@@ -23,7 +21,7 @@ impl Settings {
     pub fn new() -> Result<Self, ConfigError> {
         let mut s = Config::new();
 
-        s.set_default("db_url", DEFAULT_DB_URL.as_ref())?;
+        s.set_default("db_url", DEFAULT_DB_PATH.as_ref())?;
         s.set_default("ticket_prefix", "")?;
 
         // Read Config Settings
@@ -36,9 +34,11 @@ impl Settings {
         s.merge(Environment::with_prefix("SUAIDE"))?;
 
         let db_url = s.get_str("db_url")?;
-        verify_or_setup_folder_structure(db_url).map_err(|_| {
+        let db_url = shellexpand::tilde(&db_url).to_string();
+        verify_or_setup_folder_structure(db_url.clone()).map_err(|_| {
             ConfigError::NotFound("Config directory was not able to be initialized".to_string())
         })?;
+        s.set("db_url", db_url)?;
 
         s.try_into()
     }
