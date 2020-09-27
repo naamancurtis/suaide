@@ -27,9 +27,9 @@ pub fn app() -> App<'static> {
         )
 }
 
-pub fn handler<W: io::Write>(
+pub fn handler<R: io::BufRead, W: io::Write>(
     matches: &ArgMatches,
-    state: &mut State<W>,
+    state: &mut State<R, W>,
 ) -> Result<(), SuaideError> {
     if matches.is_present("all") {
         return confirm_and_delete_all(state.get_conn());

@@ -19,10 +19,14 @@ pub fn build_app() -> App<'static> {
         .subcommand(stand_up::app())
 }
 
-pub(crate) fn handle_matches<W: io::Write>(
+pub(crate) fn handle_matches<R, W>(
     matches: ArgMatches,
-    state: &mut State<W>,
-) -> Result<(), SuaideError> {
+    state: &mut State<R, W>,
+) -> Result<(), SuaideError>
+where
+    W: io::Write,
+    R: io::BufRead,
+{
     match matches.subcommand() {
         ("add", Some(matches)) => add::handler(matches, state),
         ("edit", Some(matches)) => edit::handler(matches, state),

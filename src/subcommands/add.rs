@@ -6,7 +6,6 @@ use std::io;
 use diesel::prelude::*;
 use diesel::Insertable;
 
-use crate::common::inputs::{get_input, get_optional_input};
 use crate::domain::SuaideError;
 use crate::schema::suaide;
 use crate::state::State;
@@ -31,9 +30,9 @@ pub fn app() -> App<'static> {
         )
 }
 
-pub fn handler<W: io::Write>(
+pub fn handler<R: io::BufRead, W: io::Write>(
     matches: &ArgMatches,
-    state: &mut State<W>,
+    state: &mut State<R, W>,
 ) -> Result<(), SuaideError> {
     let description: String;
     let ticket: Option<String>;
@@ -45,7 +44,7 @@ pub fn handler<W: io::Write>(
             .expect("already checked string");
         ticket = state.generate_ticket_id(matches.value_of("ticket_id").map(String::from));
     } else {
-        let result = grab_input_from_user()?;
+        let result = grab_input_from_user(state)?;
         description = result.0;
         ticket = state.generate_ticket_id(result.1);
     }
@@ -71,9 +70,11 @@ pub fn handler<W: io::Write>(
     Ok(())
 }
 
-fn grab_input_from_user() -> Result<(String, Option<String>), SuaideError> {
-    let description = get_input("description", None)?;
-    let ticket = get_optional_input("ID", None)?;
+fn grab_input_from_user<R: io::BufRead, W: io::Write>(
+    state: &mut State<R, W>,
+) -> Result<(String, Option<String>), SuaideError> {
+    let description = state.get_input("description", None)?;
+    let ticket = state.get_optional_input("ID", None)?;
     Ok((description, ticket))
 }
 
@@ -104,13 +105,16 @@ mod test_add_app {
     use crate::domain::{Status, Task};
     use crate::schema::suaide::dsl::*;
     use crate::state::State;
+    use std::io::Cursor;
     use std::str::from_utf8;
+
     const EXPECTED_STDOUT_OUTPUT: &str = "\u{1b}[32mAdded task\u{1b}[0m: Test Description\n";
 
     #[test]
     fn test_full_flag_inputs_short() {
         let mut writer: Vec<u8> = Vec::new();
-        let mut state = State::new(&mut writer).unwrap();
+        let mut reader = Cursor::new(b"");
+        let mut state = State::new(&mut reader, &mut writer).unwrap();
         let matches = app().get_matches_from(vec!["add", "-t", "1234", "-d", "Test Description"]);
         let result = handler(&matches, &mut state);
         assert!(result.is_ok());
@@ -134,7 +138,8 @@ mod test_add_app {
     #[test]
     fn test_full_flag_inputs_short_no_ticket() {
         let mut writer: Vec<u8> = Vec::new();
-        let mut state = State::new(&mut writer).unwrap();
+        let mut reader = Cursor::new(b"");
+        let mut state = State::new(&mut reader, &mut writer).unwrap();
         let matches = app().get_matches_from(vec!["add", "-d", "Test Description"]);
         let result = handler(&matches, &mut state);
         assert!(result.is_ok());
@@ -158,7 +163,8 @@ mod test_add_app {
     #[test]
     fn test_full_flag_inputs_long() {
         let mut writer: Vec<u8> = Vec::new();
-        let mut state = State::new(&mut writer).unwrap();
+        let mut reader = Cursor::new(b"");
+        let mut state = State::new(&mut reader, &mut writer).unwrap();
         let matches = app().get_matches_from(vec![
             "add",
             "--ticket",
@@ -188,7 +194,8 @@ mod test_add_app {
     #[test]
     fn test_full_flag_inputs_long_no_ticket() {
         let mut writer: Vec<u8> = Vec::new();
-        let mut state = State::new(&mut writer).unwrap();
+        let mut reader = Cursor::new(b"");
+        let mut state = State::new(&mut reader, &mut writer).unwrap();
         let matches = app().get_matches_from(vec!["add", "--desc", "Test Description"]);
         let result = handler(&matches, &mut state);
         assert!(result.is_ok());
@@ -224,10 +231,12 @@ mod test_add_app {
     #[test]
     fn test_ticket_id_already_exists() {
         let mut writer: Vec<u8> = Vec::new();
-        let mut state = State::new(&mut writer).unwrap();
+        let mut reader = Cursor::new(b"");
+        let mut state = State::new(&mut reader, &mut writer).unwrap();
+
+        test_helpers::insert_task(state.get_conn());
+
         let matches = app().get_matches_from(vec!["add", "-t", "1234", "-d", "Test Description"]);
-        let result = handler(&matches, &mut state);
-        assert!(result.is_ok());
         let result = handler(&matches, &mut state).unwrap_err();
         match result {
             SuaideError::TicketAlreadyExistsError => {}
@@ -235,18 +244,66 @@ mod test_add_app {
         }
     }
 
-    // Dialoguer blocks
-    // #[test]
-    // fn test_prompts() {
-    //     let mut writer: Vec<u8> = Vec::new();
-    //     let mut state = State::new(&mut writer).unwrap();
-    //     let matches = app().get_matches_from(vec!["add"]);
-    //     let result = handler(&matches, &mut state);
-    //     assert!(result.is_ok());
-    //     let result = handler(&matches, &mut state).unwrap_err();
-    //     match result {
-    //         SuaideError::TicketAlreadyExistsError => {}
-    //         _ => panic!("Expected ticket already exists error"),
-    //     }
-    // }
+    #[test]
+    fn test_prompts() {
+        let mut writer: Vec<u8> = Vec::new();
+        let mut reader = Cursor::new(b"Test Description\n1234\n");
+        let mut state = State::new(&mut reader, &mut writer).unwrap();
+        let matches = app().get_matches_from(vec!["add"]);
+        let result = handler(&matches, &mut state);
+        assert!(result.is_ok());
+
+        let db_conn = state.get_conn();
+        let result: Task = suaide
+            .find(1)
+            .first(db_conn)
+            .expect("This should return an Ok");
+
+        assert_eq!(result.id, 1);
+        assert_eq!(result.ticket, Some("1234".to_string()));
+        assert_eq!(result.description, "Test Description".to_string());
+        assert_eq!(result.status, Status::Open as i16);
+        assert_eq!(result.closed, None);
+
+        let data = from_utf8(&writer[writer.len() - EXPECTED_STDOUT_OUTPUT.len()..])
+            .expect("should be a string here");
+        assert_eq!(data, EXPECTED_STDOUT_OUTPUT);
+    }
+
+    #[test]
+    fn test_prompts_error_on_duplicate_id() {
+        let mut writer: Vec<u8> = Vec::new();
+        let mut reader = Cursor::new(b"Test Description\n1234\n");
+        let mut state = State::new(&mut reader, &mut writer).unwrap();
+
+        test_helpers::insert_task(state.get_conn());
+
+        let matches = app().get_matches_from(vec!["add"]);
+        let result = handler(&matches, &mut state).unwrap_err();
+        match result {
+            SuaideError::TicketAlreadyExistsError => {}
+            _ => panic!("Expected ticket already exists error"),
+        }
+    }
+}
+
+#[cfg(test)]
+
+pub(crate) mod test_helpers {
+    use super::AddTask;
+    use diesel::prelude::*;
+
+    pub(crate) fn insert_task(db_conn: &SqliteConnection) {
+        let task = AddTask {
+            ticket: Some("1234".to_string()),
+            description: "Test Description".to_string(),
+            status: 0,
+            opened: 10000,
+        };
+
+        diesel::insert_into(crate::schema::suaide::table)
+            .values(task)
+            .execute(db_conn)
+            .expect("Insert should be successful");
+    }
 }

@@ -3,10 +3,7 @@ use clap::{App, Arg, ArgMatches};
 use diesel::prelude::*;
 use std::io;
 
-use crate::common::{
-    inputs::{get_input, get_optional_input, get_state_input},
-    storage::get_task,
-};
+use crate::common::{inputs::get_state_input, storage::get_task};
 use crate::domain::{SuaideError, Task, TaskChangeSet};
 use crate::state::State;
 
@@ -28,9 +25,9 @@ pub fn app() -> App<'static> {
         )
 }
 
-pub fn handler<W: io::Write>(
+pub fn handler<R: io::BufRead, W: io::Write>(
     matches: &ArgMatches,
-    state: &mut State<W>,
+    state: &mut State<R, W>,
 ) -> Result<(), SuaideError> {
     let is_verbose = matches.is_present("verbose");
     if let Some(task_id) = matches.value_of("task") {
@@ -51,13 +48,14 @@ pub fn handler<W: io::Write>(
     Err(SuaideError::IncorrectArgs)
 }
 
-fn grab_input_from_user<W: io::Write>(
+fn grab_input_from_user<R: io::BufRead, W: io::Write>(
     task: &Task,
-    state: &mut State<W>,
+    state: &mut State<R, W>,
 ) -> Result<TaskChangeSet, SuaideError> {
     let mut change_set = TaskChangeSet::default();
-    let description = get_input("description", Some(task.description.clone()))?;
-    let ticket = state.generate_ticket_id(get_optional_input("ID", task.ticket.clone())?);
+    let description = state.get_input("description", Some(task.description.clone()))?;
+    let ticket_id = state.get_optional_input("ID", task.ticket.clone())?;
+    let ticket = state.generate_ticket_id(ticket_id);
     let status = get_state_input(task.status.into());
 
     change_set.set_description(task, description);

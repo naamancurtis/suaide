@@ -21,6 +21,8 @@ fn main() -> Result<(), SuaideError> {
     let app = build_app();
     let stdout = std::io::stdout();
     let mut writer = stdout.lock();
-    let mut state = State::new(&mut writer)?;
+    let stdin = std::io::stdin();
+    let mut reader = stdin.lock();
+    let mut state = State::new(&mut reader, &mut writer)?;
     handle_matches(app.get_matches(), &mut state)
 }

@@ -18,9 +18,9 @@ pub fn app() -> App<'static> {
     )
 }
 
-pub fn handler<W: io::Write>(
+pub fn handler<R: io::BufRead, W: io::Write>(
     matches: &ArgMatches,
-    state: &mut State<W>,
+    state: &mut State<R, W>,
 ) -> Result<(), SuaideError> {
     if let Some(task) = matches.value_of("task") {
         return update_task(task, state);
@@ -28,7 +28,10 @@ pub fn handler<W: io::Write>(
     Err(SuaideError::IncorrectArgs)
 }
 
-fn update_task<W: io::Write>(task: &str, state: &mut State<W>) -> Result<(), SuaideError> {
+fn update_task<R: io::BufRead, W: io::Write>(
+    task: &str,
+    state: &mut State<R, W>,
+) -> Result<(), SuaideError> {
     use crate::schema::suaide::dsl::{closed, status, suaide, ticket};
 
     let update = (
