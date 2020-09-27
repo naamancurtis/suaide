@@ -23,6 +23,7 @@ embed_migrations!();
 
 fn main() -> Result<(), SuaideError> {
     let app = build_app();
-    let state = State::new()?;
-    handle_matches(app.get_matches(), &state)
+    let mut writer = std::io::stdout();
+    let mut state = State::new(&mut writer)?;
+    handle_matches(app.get_matches(), &mut state)
 }

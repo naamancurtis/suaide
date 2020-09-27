@@ -1,6 +1,7 @@
 use chrono::Local;
 use clap::{App, Arg, ArgMatches};
 use colored::Colorize;
+use std::io;
 
 use diesel::prelude::*;
 
@@ -19,7 +20,10 @@ pub fn app() -> App<'static> {
         )
 }
 
-pub fn handler(matches: &ArgMatches, state: &State) -> Result<(), SuaideError> {
+pub fn handler<W: io::Write>(
+    matches: &ArgMatches,
+    state: &mut State<W>,
+) -> Result<(), SuaideError> {
     let is_verbose = matches.is_present("verbose");
     let (yesterday_start, yesterday_end) =
         calculate_duration_from_timeframe(Local::now().date(), Timeframe::Yesterday);

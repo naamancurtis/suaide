@@ -28,12 +28,13 @@ impl Settings {
             shellexpand::tilde(&format!("{}/settings.yml", DEFAULT_SUAIDE_PATH.to_string()))
                 .to_string();
 
-        // Read Config Settings
-        s.merge(File::with_name(&config_name).required(false))?;
+        if cfg!(not(test)) {
+            // Read Config Settings
+            s.merge(File::with_name(&config_name).required(false))?;
 
-        // Overwrite with environment variables
-        s.merge(Environment::with_prefix("SUAIDE"))?;
-
+            // Overwrite with environment variables
+            s.merge(Environment::with_prefix("SUAIDE"))?;
+        }
         let db_url = s.get_str("db_url")?;
         let db_url = shellexpand::tilde(&db_url).to_string();
         verify_or_setup_folder_structure(db_url.clone()).map_err(|_| {

@@ -1,19 +1,31 @@
 use diesel::SqliteConnection;
+use std::io;
 
 use crate::database::establish_connection;
 use crate::domain::SuaideError;
 use crate::settings::Settings;
 
-pub struct State {
+pub struct State<W>
+where
+    W: io::Write,
+{
     settings: Settings,
     conn: SqliteConnection,
+    w: W,
 }
 
-impl State {
-    pub fn new() -> Result<Self, SuaideError> {
+impl<W> State<W>
+where
+    W: io::Write,
+{
+    pub fn new(writer: W) -> Result<Self, SuaideError> {
         let settings = Settings::new()?;
         let conn = establish_connection(&settings.db_url)?;
-        Ok(State { settings, conn })
+        Ok(State {
+            settings,
+            conn,
+            w: writer,
+        })
     }
 
     pub fn get_conn(&self) -> &SqliteConnection {
@@ -33,5 +45,9 @@ impl State {
 
     pub fn get_ticket_prefix(&self) -> &str {
         &self.settings.ticket_prefix
+    }
+
+    pub fn writer(&mut self) -> &mut W {
+        &mut self.w
     }
 }

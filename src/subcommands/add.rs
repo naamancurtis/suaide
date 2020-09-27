@@ -1,14 +1,15 @@
 use chrono::Local;
 use clap::{App, Arg, ArgMatches};
 use colored::Colorize;
+use std::io;
 
 use diesel::prelude::*;
 use diesel::Insertable;
 
 use crate::common::inputs::{get_input, get_optional_input};
-use crate::state::State;
 use crate::domain::SuaideError;
 use crate::schema::suaide;
+use crate::state::State;
 
 pub fn app() -> App<'static> {
     App::new("add")
@@ -17,6 +18,7 @@ pub fn app() -> App<'static> {
             Arg::with_name("ticket_id")
                 .long("ticket")
                 .short('t')
+                .requires("description")
                 .about("Ticket identifier")
                 .takes_value(true),
         )
@@ -29,7 +31,10 @@ pub fn app() -> App<'static> {
         )
 }
 
-pub fn handler(matches: &ArgMatches, state: &State) -> Result<(), SuaideError> {
+pub fn handler<W: io::Write>(
+    matches: &ArgMatches,
+    state: &mut State<W>,
+) -> Result<(), SuaideError> {
     let description: String;
     let ticket: Option<String>;
 
@@ -49,7 +54,12 @@ pub fn handler(matches: &ArgMatches, state: &State) -> Result<(), SuaideError> {
     let _ = diesel::insert_into(suaide::table)
         .values(&task)
         .execute(state.get_conn())?;
-    println!("{}: {}", "Added task".green(), task.description);
+    writeln!(
+        state.writer(),
+        "{}: {}",
+        "Added task".green(),
+        task.description
+    )?;
     Ok(())
 }
 
@@ -76,5 +86,130 @@ impl AddTask {
             opened: Local::now().timestamp(),
             status: 0,
         }
+    }
+}
+
+#[cfg(test)]
+mod test_add_app {
+    use super::*;
+
+    use crate::domain::{Status, Task};
+    use crate::schema::suaide::dsl::*;
+    use crate::state::State;
+    use std::str::from_utf8;
+    const EXPECTED_STDOUT_OUTPUT: &str = "\u{1b}[32mAdded task\u{1b}[0m: Test Description\n";
+
+    #[test]
+    fn test_full_flag_inputs_short() {
+        let mut writer: Vec<u8> = Vec::new();
+        let mut state = State::new(&mut writer).unwrap();
+        let matches = app().get_matches_from(vec!["add", "-t", "1234", "-d", "Test Description"]);
+        let result = handler(&matches, &mut state);
+        assert!(result.is_ok());
+
+        let db_conn = state.get_conn();
+        let result: Task = suaide
+            .find(1)
+            .first(db_conn)
+            .expect("This should return an Ok");
+
+        assert_eq!(result.id, 1);
+        assert_eq!(result.ticket, Some("1234".to_string()));
+        assert_eq!(result.description, "Test Description".to_string());
+        assert_eq!(result.status, Status::Open as i16);
+        assert_eq!(result.closed, None);
+
+        let data = from_utf8(&writer).expect("should be a string here");
+        assert_eq!(data, EXPECTED_STDOUT_OUTPUT);
+    }
+
+    #[test]
+    fn test_full_flag_inputs_short_no_ticket() {
+        let mut writer: Vec<u8> = Vec::new();
+        let mut state = State::new(&mut writer).unwrap();
+        let matches = app().get_matches_from(vec!["add", "-d", "Test Description"]);
+        let result = handler(&matches, &mut state);
+        assert!(result.is_ok());
+
+        let db_conn = state.get_conn();
+        let result: Task = suaide
+            .find(1)
+            .first(db_conn)
+            .expect("This should return an Ok");
+
+        assert_eq!(result.id, 1);
+        assert_eq!(result.ticket, None);
+        assert_eq!(result.description, "Test Description".to_string());
+        assert_eq!(result.status, Status::Open as i16);
+        assert_eq!(result.closed, None);
+
+        let data = from_utf8(&writer).expect("should be a string here");
+        assert_eq!(data, EXPECTED_STDOUT_OUTPUT);
+    }
+
+    #[test]
+    fn test_full_flag_inputs_long() {
+        let mut writer: Vec<u8> = Vec::new();
+        let mut state = State::new(&mut writer).unwrap();
+        let matches = app().get_matches_from(vec![
+            "add",
+            "--ticket",
+            "1234",
+            "--desc",
+            "Test Description",
+        ]);
+        let result = handler(&matches, &mut state);
+        assert!(result.is_ok());
+
+        let db_conn = state.get_conn();
+        let result: Task = suaide
+            .find(1)
+            .first(db_conn)
+            .expect("This should return an Ok");
+
+        assert_eq!(result.id, 1);
+        assert_eq!(result.ticket, Some("1234".to_string()));
+        assert_eq!(result.description, "Test Description".to_string());
+        assert_eq!(result.status, Status::Open as i16);
+        assert_eq!(result.closed, None);
+
+        let data = from_utf8(&writer).expect("should be a string here");
+        assert_eq!(data, EXPECTED_STDOUT_OUTPUT);
+    }
+
+    #[test]
+    fn test_full_flag_inputs_long_no_ticket() {
+        let mut writer: Vec<u8> = Vec::new();
+        let mut state = State::new(&mut writer).unwrap();
+        let matches = app().get_matches_from(vec!["add", "--desc", "Test Description"]);
+        let result = handler(&matches, &mut state);
+        assert!(result.is_ok());
+
+        let db_conn = state.get_conn();
+        let result: Task = suaide
+            .find(1)
+            .first(db_conn)
+            .expect("This should return an Ok");
+
+        assert_eq!(result.id, 1);
+        assert_eq!(result.ticket, None);
+        assert_eq!(result.description, "Test Description".to_string());
+        assert_eq!(result.status, Status::Open as i16);
+        assert_eq!(result.closed, None);
+
+        let data = from_utf8(&writer).expect("should be a string here");
+        assert_eq!(data, EXPECTED_STDOUT_OUTPUT);
+    }
+
+    #[test]
+    fn test_full_flag_inputs_short_errors_with_no_description() {
+        let matches = app().try_get_matches_from(vec!["add", "-t", "1234"]);
+        assert!(matches.is_err());
+    }
+
+    #[test]
+    fn test_full_flag_inputs_long_errors_with_no_description() {
+        let matches = app().try_get_matches_from(vec!["add", "-ticket", "1234"]);
+        assert!(matches.is_err());
     }
 }

@@ -1,4 +1,5 @@
 use clap::{App, Arg, ArgMatches};
+use std::io;
 
 use diesel::prelude::*;
 
@@ -43,7 +44,10 @@ pub fn app() -> App<'static> {
         )
 }
 
-pub fn handler(matches: &ArgMatches, state: &State) -> Result<(), SuaideError> {
+pub fn handler<W: io::Write>(
+    matches: &ArgMatches,
+    state: &mut State<W>,
+) -> Result<(), SuaideError> {
     let is_verbose = matches.is_present("verbose");
     if let Some(task_id) = matches.value_of("task") {
         let task_id = state.generate_ticket_id(Some(task_id)).unwrap();

@@ -1,6 +1,7 @@
 use clap::{App, Arg, ArgMatches};
 
 use diesel::prelude::*;
+use std::io;
 
 use crate::common::{
     inputs::{get_input, get_optional_input, get_state_input},
@@ -27,7 +28,10 @@ pub fn app() -> App<'static> {
         )
 }
 
-pub fn handler(matches: &ArgMatches, state: &State) -> Result<(), SuaideError> {
+pub fn handler<W: io::Write>(
+    matches: &ArgMatches,
+    state: &mut State<W>,
+) -> Result<(), SuaideError> {
     let is_verbose = matches.is_present("verbose");
     if let Some(task_id) = matches.value_of("task") {
         let task_id = state.generate_ticket_id(Some(task_id)).unwrap();
@@ -47,7 +51,10 @@ pub fn handler(matches: &ArgMatches, state: &State) -> Result<(), SuaideError> {
     Err(SuaideError::IncorrectArgs)
 }
 
-fn grab_input_from_user(task: &Task, state: &State) -> Result<TaskChangeSet, SuaideError> {
+fn grab_input_from_user<W: io::Write>(
+    task: &Task,
+    state: &mut State<W>,
+) -> Result<TaskChangeSet, SuaideError> {
     let mut change_set = TaskChangeSet::default();
     let description = get_input("description", Some(task.description.clone()))?;
     let ticket = state.generate_ticket_id(get_optional_input("ID", task.ticket.clone())?);

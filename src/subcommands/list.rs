@@ -1,5 +1,6 @@
 use chrono::prelude::*;
 use clap::{App, Arg, ArgMatches};
+use std::io;
 
 use diesel::prelude::*;
 
@@ -49,7 +50,10 @@ pub fn app() -> App<'static> {
         )
 }
 
-pub fn handler(matches: &ArgMatches, state: &State) -> Result<(), SuaideError> {
+pub fn handler<W: io::Write>(
+    matches: &ArgMatches,
+    state: &mut State<W>,
+) -> Result<(), SuaideError> {
     let is_verbose = matches.is_present("verbose");
     let (mut start, mut end): (i64, i64) = (0, Local::now().timestamp());
     if let Some(duration_iter) = matches.values_of("duration") {

@@ -1,6 +1,7 @@
 use clap::{App, Arg, ArgMatches};
 use colored::Colorize;
 use dialoguer::Confirm;
+use std::io;
 
 use diesel::prelude::*;
 
@@ -26,7 +27,10 @@ pub fn app() -> App<'static> {
         )
 }
 
-pub fn handler(matches: &ArgMatches, state: &State) -> Result<(), SuaideError> {
+pub fn handler<W: io::Write>(
+    matches: &ArgMatches,
+    state: &mut State<W>,
+) -> Result<(), SuaideError> {
     if matches.is_present("all") {
         return confirm_and_delete_all(state.get_conn());
     }

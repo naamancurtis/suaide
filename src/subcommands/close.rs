@@ -1,6 +1,7 @@
 use chrono::prelude::*;
 use clap::{App, Arg, ArgMatches};
 use colored::Colorize;
+use std::io;
 
 use diesel::prelude::*;
 
@@ -17,14 +18,17 @@ pub fn app() -> App<'static> {
     )
 }
 
-pub fn handler(matches: &ArgMatches, state: &State) -> Result<(), SuaideError> {
+pub fn handler<W: io::Write>(
+    matches: &ArgMatches,
+    state: &mut State<W>,
+) -> Result<(), SuaideError> {
     if let Some(task) = matches.value_of("task") {
         return update_task(task, state);
     }
     Err(SuaideError::IncorrectArgs)
 }
 
-fn update_task(task: &str, state: &State) -> Result<(), SuaideError> {
+fn update_task<W: io::Write>(task: &str, state: &mut State<W>) -> Result<(), SuaideError> {
     use crate::schema::suaide::dsl::{closed, status, suaide, ticket};
 
     let update = (

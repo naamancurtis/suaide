@@ -1,4 +1,5 @@
 use clap::{App, ArgMatches};
+use std::io;
 
 use crate::domain::SuaideError;
 use crate::state::State;
@@ -18,15 +19,37 @@ pub fn build_app() -> App<'static> {
         .subcommand(stand_up::app())
 }
 
-pub(crate) fn handle_matches(matches: ArgMatches, state: &State) -> Result<(), SuaideError> {
+pub(crate) fn handle_matches<W: io::Write>(
+    matches: ArgMatches,
+    state: &mut State<W>,
+) -> Result<(), SuaideError> {
     match matches.subcommand() {
         ("add", Some(matches)) => add::handler(matches, state),
+        ("edit", Some(matches)) => edit::handler(matches, state),
         ("list", Some(matches)) => list::handler(matches, state),
         ("remove", Some(matches)) => remove::handler(matches, state),
         ("close", Some(matches)) => close::handler(matches, state),
-        ("edit", Some(matches)) => edit::handler(matches, state),
         ("status", Some(matches)) => status::handler(matches, state),
         ("standup", Some(matches)) => stand_up::handler(matches, state),
         _ => Err(SuaideError::SubCommandNotFound),
+    }
+}
+
+#[cfg(test)]
+mod test_build_app {
+    use super::build_app;
+
+    #[test]
+    fn add_is_present() {
+        let app = build_app();
+        let subcommands = app
+            .get_subcommands()
+            .iter()
+            .map(|app| app.get_name())
+            .collect::<Vec<&str>>();
+        let expected = [
+            "add", "edit", "list", "remove", "close", "status", "standup",
+        ];
+        assert_eq!(subcommands, expected);
     }
 }
