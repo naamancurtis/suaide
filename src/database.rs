@@ -2,6 +2,8 @@ use diesel::prelude::*;
 
 use crate::domain::SuaideError;
 
+embed_migrations!();
+
 pub fn establish_connection(db_url: &str) -> Result<SqliteConnection, SuaideError> {
     let conn = if cfg!(test) {
         SqliteConnection::establish(":memory:")
@@ -10,6 +12,6 @@ pub fn establish_connection(db_url: &str) -> Result<SqliteConnection, SuaideErro
         SqliteConnection::establish(db_url)?
     };
 
-    diesel_migrations::run_pending_migrations(&conn)?;
+    embedded_migrations::run(&conn)?;
     Ok(conn)
 }

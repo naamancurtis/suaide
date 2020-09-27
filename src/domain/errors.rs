@@ -11,6 +11,9 @@ pub enum SuaideError {
     #[error("Task not found")]
     NotFound,
 
+    #[error("Ticket already exists, ticket id must be unique")]
+    TicketAlreadyExistsError,
+
     #[error(transparent)]
     ConnectionError(#[from] diesel::result::ConnectionError),
 

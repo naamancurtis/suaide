@@ -51,9 +51,17 @@ pub fn handler<W: io::Write>(
     }
 
     let task = AddTask::new(ticket, description);
-    let _ = diesel::insert_into(suaide::table)
+    match diesel::insert_into(suaide::table)
         .values(&task)
-        .execute(state.get_conn())?;
+        .execute(state.get_conn())
+    {
+        Err(diesel::result::Error::DatabaseError(
+            diesel::result::DatabaseErrorKind::UniqueViolation,
+            _,
+        )) => Err(SuaideError::TicketAlreadyExistsError),
+        Err(e) => Err(SuaideError::from(e)),
+        Ok(x) => Ok(x),
+    }?;
     writeln!(
         state.writer(),
         "{}: {}",
@@ -212,4 +220,33 @@ mod test_add_app {
         let matches = app().try_get_matches_from(vec!["add", "-ticket", "1234"]);
         assert!(matches.is_err());
     }
+
+    #[test]
+    fn test_ticket_id_already_exists() {
+        let mut writer: Vec<u8> = Vec::new();
+        let mut state = State::new(&mut writer).unwrap();
+        let matches = app().get_matches_from(vec!["add", "-t", "1234", "-d", "Test Description"]);
+        let result = handler(&matches, &mut state);
+        assert!(result.is_ok());
+        let result = handler(&matches, &mut state).unwrap_err();
+        match result {
+            SuaideError::TicketAlreadyExistsError => {}
+            _ => panic!("Expected ticket already exists error"),
+        }
+    }
+
+    // Dialoguer blocks
+    // #[test]
+    // fn test_prompts() {
+    //     let mut writer: Vec<u8> = Vec::new();
+    //     let mut state = State::new(&mut writer).unwrap();
+    //     let matches = app().get_matches_from(vec!["add"]);
+    //     let result = handler(&matches, &mut state);
+    //     assert!(result.is_ok());
+    //     let result = handler(&matches, &mut state).unwrap_err();
+    //     match result {
+    //         SuaideError::TicketAlreadyExistsError => {}
+    //         _ => panic!("Expected ticket already exists error"),
+    //     }
+    // }
 }
