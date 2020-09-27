@@ -24,7 +24,15 @@ where
     W: io::Write,
 {
     pub fn new(reader: R, writer: W) -> Result<Self, SuaideError> {
-        let settings = Settings::new()?;
+        let mut settings = Settings::new()?;
+
+        // Easier to set this to "" within tests, or it might pick
+        // up on a config file and run the tests with unexpected
+        // behavior
+        if cfg!(test) {
+            settings.ticket_prefix = "".to_string();
+        }
+
         let conn = establish_connection(&settings.db_url)?;
         Ok(State {
             settings,
@@ -51,6 +59,10 @@ where
 
     pub fn get_ticket_prefix(&self) -> &str {
         &self.settings.ticket_prefix
+    }
+
+    pub fn set_prefix(&mut self, prefix: String) {
+        self.settings.ticket_prefix = prefix;
     }
 
     pub fn writer(&mut self) -> &mut W {
@@ -119,4 +131,11 @@ where
 
         Ok(Some(input))
     }
+}
+
+#[cfg(test)]
+pub fn new_test_io_state(reader_data: &[u8]) -> (std::io::Cursor<&[u8]>, Vec<u8>) {
+    let reader = std::io::Cursor::new(reader_data);
+    let writer: Vec<u8> = Vec::new();
+    (reader, writer)
 }

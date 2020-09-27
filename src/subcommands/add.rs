@@ -104,16 +104,15 @@ mod test_add_app {
 
     use crate::domain::{Status, Task};
     use crate::schema::suaide::dsl::*;
-    use crate::state::State;
-    use std::io::Cursor;
+    use crate::state::{new_test_io_state, State};
+
     use std::str::from_utf8;
 
     const EXPECTED_STDOUT_OUTPUT: &str = "\u{1b}[32mAdded task\u{1b}[0m: Test Description\n";
 
     #[test]
     fn test_full_flag_inputs_short() {
-        let mut writer: Vec<u8> = Vec::new();
-        let mut reader = Cursor::new(b"");
+        let (mut reader, mut writer) = new_test_io_state(b"");
         let mut state = State::new(&mut reader, &mut writer).unwrap();
         let matches = app().get_matches_from(vec!["add", "-t", "1234", "-d", "Test Description"]);
         let result = handler(&matches, &mut state);
@@ -137,8 +136,7 @@ mod test_add_app {
 
     #[test]
     fn test_full_flag_inputs_short_no_ticket() {
-        let mut writer: Vec<u8> = Vec::new();
-        let mut reader = Cursor::new(b"");
+        let (mut reader, mut writer) = new_test_io_state(b"");
         let mut state = State::new(&mut reader, &mut writer).unwrap();
         let matches = app().get_matches_from(vec!["add", "-d", "Test Description"]);
         let result = handler(&matches, &mut state);
@@ -162,8 +160,7 @@ mod test_add_app {
 
     #[test]
     fn test_full_flag_inputs_long() {
-        let mut writer: Vec<u8> = Vec::new();
-        let mut reader = Cursor::new(b"");
+        let (mut reader, mut writer) = new_test_io_state(b"");
         let mut state = State::new(&mut reader, &mut writer).unwrap();
         let matches = app().get_matches_from(vec![
             "add",
@@ -193,8 +190,7 @@ mod test_add_app {
 
     #[test]
     fn test_full_flag_inputs_long_no_ticket() {
-        let mut writer: Vec<u8> = Vec::new();
-        let mut reader = Cursor::new(b"");
+        let (mut reader, mut writer) = new_test_io_state(b"");
         let mut state = State::new(&mut reader, &mut writer).unwrap();
         let matches = app().get_matches_from(vec!["add", "--desc", "Test Description"]);
         let result = handler(&matches, &mut state);
@@ -230,8 +226,7 @@ mod test_add_app {
 
     #[test]
     fn test_ticket_id_already_exists() {
-        let mut writer: Vec<u8> = Vec::new();
-        let mut reader = Cursor::new(b"");
+        let (mut reader, mut writer) = new_test_io_state(b"");
         let mut state = State::new(&mut reader, &mut writer).unwrap();
 
         test_helpers::insert_task(state.get_conn());
@@ -246,8 +241,7 @@ mod test_add_app {
 
     #[test]
     fn test_prompts() {
-        let mut writer: Vec<u8> = Vec::new();
-        let mut reader = Cursor::new(b"Test Description\n1234\n");
+        let (mut reader, mut writer) = new_test_io_state(b"Test Description\n1234\n");
         let mut state = State::new(&mut reader, &mut writer).unwrap();
         let matches = app().get_matches_from(vec!["add"]);
         let result = handler(&matches, &mut state);
@@ -272,8 +266,7 @@ mod test_add_app {
 
     #[test]
     fn test_prompts_error_on_duplicate_id() {
-        let mut writer: Vec<u8> = Vec::new();
-        let mut reader = Cursor::new(b"Test Description\n1234\n");
+        let (mut reader, mut writer) = new_test_io_state(b"Test Description\n1234\n");
         let mut state = State::new(&mut reader, &mut writer).unwrap();
 
         test_helpers::insert_task(state.get_conn());
@@ -287,13 +280,11 @@ mod test_add_app {
     }
 }
 
-#[cfg(test)]
-
-pub(crate) mod test_helpers {
+mod test_helpers {
     use super::AddTask;
     use diesel::prelude::*;
 
-    pub(crate) fn insert_task(db_conn: &SqliteConnection) {
+    pub fn insert_task(db_conn: &SqliteConnection) {
         let task = AddTask {
             ticket: Some("1234".to_string()),
             description: "Test Description".to_string(),

@@ -1,4 +1,4 @@
-use clap::{App, ArgMatches};
+use clap::{App, Arg, ArgMatches};
 use std::io;
 
 use crate::domain::SuaideError;
@@ -17,6 +17,13 @@ pub fn build_app() -> App<'static> {
         .subcommand(close::app())
         .subcommand(status::app())
         .subcommand(stand_up::app())
+        .arg(
+            Arg::with_name("prefix")
+                .about("Overwrite the ticket prefix")
+                .takes_value(true)
+                .short('p')
+                .long("prefix"),
+        )
 }
 
 pub(crate) fn handle_matches<R, W>(
@@ -27,6 +34,10 @@ where
     W: io::Write,
     R: io::BufRead,
 {
+    if let Some(prefix) = matches.value_of("prefix") {
+        state.set_prefix(prefix.to_string());
+    }
+
     match matches.subcommand() {
         ("add", Some(matches)) => add::handler(matches, state),
         ("edit", Some(matches)) => edit::handler(matches, state),
