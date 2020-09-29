@@ -35,14 +35,21 @@ pub fn handler<R: io::BufRead, W: io::Write>(
         let task = get_task(&task_id, state.get_conn())?;
         let change_set = grab_input_from_user(&task, state)?;
 
-        use crate::schema::suaide::dsl::suaide;
+        use crate::schema::suaide::dsl::{id, suaide};
 
         diesel::update(suaide.find(task.id))
             .set(change_set)
             .execute(state.get_conn())?;
 
-        let task = get_task(&task_id, state.get_conn())?;
-        task.print(is_verbose);
+        let task = suaide
+            .filter(id.eq(task.id))
+            .limit(1)
+            .load::<Task>(state.get_conn())?
+            .pop();
+
+        if let Some(task) = task {
+            task.print(is_verbose);
+        }
         return Ok(());
     }
     Err(SuaideError::IncorrectArgs)
@@ -72,19 +79,14 @@ mod test_edit_app {
     use crate::schema::suaide::dsl::*;
     use crate::state::{new_test_io_state, State};
 
-    use std::str::from_utf8;
-
-    const EXPECTED_STDOUT_OUTPUT: &str = "\u{1b}[32mAdded task\u{1b}[0m: Test Description\n";
-
-    #[ignore]
     #[test]
     fn should_edit_a_task() {
-        let (mut reader, mut writer) = new_test_io_state(b"Super Description\n4321\n");
+        let (mut reader, mut writer) = new_test_io_state(b"");
         let mut state = State::new(&mut reader, &mut writer).unwrap();
 
         test_helpers::insert_task(state.get_conn());
 
-        let matches = app().get_matches_from(vec!["task", "1234"]);
+        let matches = app().get_matches_from(vec!["edit", "1234"]);
         let result = handler(&matches, &mut state);
         assert!(result.is_ok());
 
@@ -95,13 +97,10 @@ mod test_edit_app {
             .expect("This should return an Ok");
 
         assert_eq!(result.id, 1);
-        assert_eq!(result.ticket, Some("4321".to_string()));
-        assert_eq!(result.description, "Super Description".to_string());
-        assert_eq!(result.status, Status::Open as i16);
+        assert_eq!(result.ticket, Some("MOCK DATA".to_string()));
+        assert_eq!(result.description, "MOCK DATA".to_string());
+        assert_eq!(result.status, Status::Cancelled as i16);
         assert_eq!(result.closed, None);
-
-        let data = from_utf8(&writer).expect("should be a string here");
-        assert_eq!(data, EXPECTED_STDOUT_OUTPUT);
     }
 }
 
