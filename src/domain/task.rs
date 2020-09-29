@@ -1,6 +1,6 @@
 use chrono::prelude::*;
 use colored::Colorize;
-use diesel::{AsChangeset, Queryable};
+use diesel::{AsChangeset, Insertable, Queryable};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::time::{Duration, UNIX_EPOCH};
@@ -126,5 +126,25 @@ impl Ord for Task {
 impl PartialOrd for Task {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
+    }
+}
+
+#[derive(Insertable)]
+#[table_name = "suaide"]
+pub(crate) struct AddTask {
+    pub(crate) ticket: Option<String>,
+    pub(crate) description: String,
+    pub(crate) opened: i64,
+    pub(crate) status: i16,
+}
+
+impl AddTask {
+    pub fn new(ticket: Option<String>, description: String) -> Self {
+        Self {
+            ticket,
+            description,
+            opened: Local::now().timestamp(),
+            status: 0,
+        }
     }
 }

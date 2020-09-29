@@ -1,4 +1,5 @@
 use colored::Colorize;
+use dialoguer::Input;
 use diesel::SqliteConnection;
 use std::io;
 
@@ -78,27 +79,23 @@ where
         key: &str,
         existing_data: Option<String>,
     ) -> Result<String, SuaideError> {
+        // @todo - find a way to properly test Dialoguer
+        if cfg!(test) {
+            return Ok("MOCK DATA".to_string());
+        }
+
         let prefix = if existing_data.is_some() {
             EDIT_PREFIX
         } else {
             ADD_PREFIX
         };
 
-        let mut input = existing_data.unwrap_or_default();
-
-        writeln!(self.writer(), "{}", format!("{} task {}", prefix, key))?;
-
-        while input.is_empty() {
-            self.reader().read_line(&mut input)?;
-
-            let len = input.trim_end_matches(&['\r', '\n'][..]).len();
-            input.truncate(len);
-            if input.is_empty() {
-                writeln!(self.writer(), "{} is required", key.yellow().italic())?;
-            }
-        }
-
-        Ok(input)
+        let mut input = Input::<String>::new();
+        let input = input
+            .with_prompt(format!("{} task {}", prefix, key))
+            .allow_empty(false)
+            .with_initial_text(existing_data.unwrap_or_default());
+        Ok(input.interact()?)
     }
 
     pub fn get_optional_input(
@@ -106,30 +103,29 @@ where
         key: &str,
         existing_data: Option<String>,
     ) -> Result<Option<String>, SuaideError> {
-        let prefix = if existing_data.is_some() {
-            EDIT_PREFIX
+        // @todo - find a way to properly test Dialoguer
+        if cfg!(test) {
+            return Ok(Some("MOCK DATA".to_string()));
+        }
+
+        let (prefix, suffix) = if existing_data.is_some() {
+            (EDIT_PREFIX, "".italic())
         } else {
-            ADD_PREFIX
+            (ADD_PREFIX, "(Enter to skip)".italic())
         };
 
-        let mut input = existing_data.unwrap_or_default();
+        let mut input = Input::<String>::new();
+        let input = input
+            .with_prompt(format!("{} task {} {}", prefix, key, suffix))
+            .allow_empty(true)
+            .with_initial_text(existing_data.unwrap_or_default());
+        let final_input = input.interact()?;
 
-        writeln!(
-            self.writer(),
-            "{}",
-            format!("{} task {} {}", prefix, key, "(Enter to skip)".italic())
-        )?;
-
-        self.reader().read_line(&mut input)?;
-
-        let len = input.trim_end_matches(&['\r', '\n'][..]).len();
-        input.truncate(len);
-
-        if input.is_empty() {
+        if final_input.is_empty() {
             return Ok(None);
         }
 
-        Ok(Some(input))
+        Ok(Some(final_input))
     }
 }
 
@@ -138,4 +134,30 @@ pub fn new_test_io_state(reader_data: &[u8]) -> (std::io::Cursor<&[u8]>, Vec<u8>
     let reader = std::io::Cursor::new(reader_data);
     let writer: Vec<u8> = Vec::new();
     (reader, writer)
+}
+
+#[cfg(test)]
+mod test_state_methods {
+    use super::*;
+
+    // These tests are kind of useless?
+    // Look into how to improve them
+
+    #[test]
+    fn get_input_without_data() {
+        let (mut reader, mut writer) = new_test_io_state(b"");
+        let mut state = State::new(&mut reader, &mut writer).unwrap();
+        let output = state.get_input("TEST", None);
+        assert!(output.is_ok());
+        assert_eq!(output.unwrap(), "MOCK DATA".to_string());
+    }
+
+    #[test]
+    fn get_input_with_data() {
+        let (mut reader, mut writer) = new_test_io_state(b"");
+        let mut state = State::new(&mut reader, &mut writer).unwrap();
+        let output = state.get_input("TEST", Some("EXISTING TEXT".to_string()));
+        assert!(output.is_ok());
+        assert_eq!(output.unwrap(), "MOCK DATA".to_string());
+    }
 }

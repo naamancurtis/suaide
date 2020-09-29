@@ -1,12 +1,10 @@
-use chrono::Local;
 use clap::{App, Arg, ArgMatches};
 use colored::Colorize;
 use std::io;
 
 use diesel::prelude::*;
-use diesel::Insertable;
 
-use crate::domain::SuaideError;
+use crate::domain::{AddTask, SuaideError};
 use crate::schema::suaide;
 use crate::state::State;
 
@@ -78,26 +76,6 @@ fn grab_input_from_user<R: io::BufRead, W: io::Write>(
     Ok((description, ticket))
 }
 
-#[derive(Insertable)]
-#[table_name = "suaide"]
-struct AddTask {
-    ticket: Option<String>,
-    description: String,
-    opened: i64,
-    status: i16,
-}
-
-impl AddTask {
-    pub fn new(ticket: Option<String>, description: String) -> Self {
-        Self {
-            ticket,
-            description,
-            opened: Local::now().timestamp(),
-            status: 0,
-        }
-    }
-}
-
 #[cfg(test)]
 mod test_add_app {
     use super::*;
@@ -108,7 +86,7 @@ mod test_add_app {
 
     use std::str::from_utf8;
 
-    const EXPECTED_STDOUT_OUTPUT: &str = "\u{1b}[32mAdded task\u{1b}[0m: Test Description\n";
+    const EXPECTED_STDOUT_OUTPUT: &str = "\u{1b}[32mAdded task\u{1b}[0m:";
 
     #[test]
     fn test_full_flag_inputs_short() {
@@ -131,7 +109,7 @@ mod test_add_app {
         assert_eq!(result.closed, None);
 
         let data = from_utf8(&writer).expect("should be a string here");
-        assert_eq!(data, EXPECTED_STDOUT_OUTPUT);
+        assert!(data.contains(EXPECTED_STDOUT_OUTPUT));
     }
 
     #[test]
@@ -155,7 +133,7 @@ mod test_add_app {
         assert_eq!(result.closed, None);
 
         let data = from_utf8(&writer).expect("should be a string here");
-        assert_eq!(data, EXPECTED_STDOUT_OUTPUT);
+        assert!(data.contains(EXPECTED_STDOUT_OUTPUT));
     }
 
     #[test]
@@ -185,7 +163,7 @@ mod test_add_app {
         assert_eq!(result.closed, None);
 
         let data = from_utf8(&writer).expect("should be a string here");
-        assert_eq!(data, EXPECTED_STDOUT_OUTPUT);
+        assert!(data.contains(EXPECTED_STDOUT_OUTPUT));
     }
 
     #[test]
@@ -209,7 +187,7 @@ mod test_add_app {
         assert_eq!(result.closed, None);
 
         let data = from_utf8(&writer).expect("should be a string here");
-        assert_eq!(data, EXPECTED_STDOUT_OUTPUT);
+        assert!(data.contains(EXPECTED_STDOUT_OUTPUT));
     }
 
     #[test]
@@ -229,7 +207,7 @@ mod test_add_app {
         let (mut reader, mut writer) = new_test_io_state(b"");
         let mut state = State::new(&mut reader, &mut writer).unwrap();
 
-        test_helpers::insert_task(state.get_conn());
+        test_helpers::insert_task("1234".to_string(), state.get_conn());
 
         let matches = app().get_matches_from(vec!["add", "-t", "1234", "-d", "Test Description"]);
         let result = handler(&matches, &mut state).unwrap_err();
@@ -241,7 +219,7 @@ mod test_add_app {
 
     #[test]
     fn test_prompts() {
-        let (mut reader, mut writer) = new_test_io_state(b"Test Description\n1234\n");
+        let (mut reader, mut writer) = new_test_io_state(b"");
         let mut state = State::new(&mut reader, &mut writer).unwrap();
         let matches = app().get_matches_from(vec!["add"]);
         let result = handler(&matches, &mut state);
@@ -254,22 +232,21 @@ mod test_add_app {
             .expect("This should return an Ok");
 
         assert_eq!(result.id, 1);
-        assert_eq!(result.ticket, Some("1234".to_string()));
-        assert_eq!(result.description, "Test Description".to_string());
+        assert_eq!(result.ticket, Some("MOCK DATA".to_string()));
+        assert_eq!(result.description, "MOCK DATA".to_string());
         assert_eq!(result.status, Status::Open as i16);
         assert_eq!(result.closed, None);
 
-        let data = from_utf8(&writer[writer.len() - EXPECTED_STDOUT_OUTPUT.len()..])
-            .expect("should be a string here");
-        assert_eq!(data, EXPECTED_STDOUT_OUTPUT);
+        let data = from_utf8(&writer).expect("should be a string here");
+        assert!(data.contains(EXPECTED_STDOUT_OUTPUT));
     }
 
     #[test]
     fn test_prompts_error_on_duplicate_id() {
-        let (mut reader, mut writer) = new_test_io_state(b"Test Description\n1234\n");
+        let (mut reader, mut writer) = new_test_io_state(b"");
         let mut state = State::new(&mut reader, &mut writer).unwrap();
 
-        test_helpers::insert_task(state.get_conn());
+        test_helpers::insert_task("MOCK DATA".to_string(), state.get_conn());
 
         let matches = app().get_matches_from(vec!["add"]);
         let result = handler(&matches, &mut state).unwrap_err();
@@ -280,13 +257,14 @@ mod test_add_app {
     }
 }
 
+#[cfg(test)]
 mod test_helpers {
     use super::AddTask;
     use diesel::prelude::*;
 
-    pub fn insert_task(db_conn: &SqliteConnection) {
+    pub fn insert_task(ticket: String, db_conn: &SqliteConnection) {
         let task = AddTask {
-            ticket: Some("1234".to_string()),
+            ticket: Some(ticket),
             description: "Test Description".to_string(),
             status: 0,
             opened: 10000,

@@ -63,3 +63,64 @@ fn grab_input_from_user<R: io::BufRead, W: io::Write>(
     change_set.set_status(task, status);
     Ok(change_set)
 }
+
+#[cfg(test)]
+mod test_edit_app {
+    use super::*;
+
+    use crate::domain::{Status, Task};
+    use crate::schema::suaide::dsl::*;
+    use crate::state::{new_test_io_state, State};
+
+    use std::str::from_utf8;
+
+    const EXPECTED_STDOUT_OUTPUT: &str = "\u{1b}[32mAdded task\u{1b}[0m: Test Description\n";
+
+    #[ignore]
+    #[test]
+    fn should_edit_a_task() {
+        let (mut reader, mut writer) = new_test_io_state(b"Super Description\n4321\n");
+        let mut state = State::new(&mut reader, &mut writer).unwrap();
+
+        test_helpers::insert_task(state.get_conn());
+
+        let matches = app().get_matches_from(vec!["task", "1234"]);
+        let result = handler(&matches, &mut state);
+        assert!(result.is_ok());
+
+        let db_conn = state.get_conn();
+        let result: Task = suaide
+            .find(1)
+            .first(db_conn)
+            .expect("This should return an Ok");
+
+        assert_eq!(result.id, 1);
+        assert_eq!(result.ticket, Some("4321".to_string()));
+        assert_eq!(result.description, "Super Description".to_string());
+        assert_eq!(result.status, Status::Open as i16);
+        assert_eq!(result.closed, None);
+
+        let data = from_utf8(&writer).expect("should be a string here");
+        assert_eq!(data, EXPECTED_STDOUT_OUTPUT);
+    }
+}
+
+#[cfg(test)]
+mod test_helpers {
+    use crate::domain::AddTask;
+    use diesel::prelude::*;
+
+    pub fn insert_task(db_conn: &SqliteConnection) {
+        let task = AddTask {
+            ticket: Some("1234".to_string()),
+            description: "Test Description".to_string(),
+            status: 3,
+            opened: 10000,
+        };
+
+        diesel::insert_into(crate::schema::suaide::table)
+            .values(task)
+            .execute(db_conn)
+            .expect("Insert should be successful");
+    }
+}
