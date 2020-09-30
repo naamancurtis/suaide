@@ -18,9 +18,9 @@ pub fn app() -> App<'static> {
     )
 }
 
-pub fn handler<R: io::BufRead, W: io::Write>(
+pub fn handler<W: io::Write>(
     matches: &ArgMatches,
-    state: &mut State<R, W>,
+    state: &mut State<W>,
 ) -> Result<(), SuaideError> {
     if let Some(task) = matches.value_of("task") {
         return update_task(task, state);
@@ -28,10 +28,7 @@ pub fn handler<R: io::BufRead, W: io::Write>(
     Err(SuaideError::IncorrectArgs)
 }
 
-fn update_task<R: io::BufRead, W: io::Write>(
-    task: &str,
-    state: &mut State<R, W>,
-) -> Result<(), SuaideError> {
+fn update_task<W: io::Write>(task: &str, state: &mut State<W>) -> Result<(), SuaideError> {
     use crate::schema::suaide::dsl::{closed, status, suaide, ticket};
 
     let update = (
@@ -70,7 +67,7 @@ mod test_close_app {
 
     use crate::domain::{Status, Task};
     use crate::schema::suaide::dsl::*;
-    use crate::state::{new_test_io_state, State};
+    use crate::state::State;
 
     use std::str::from_utf8;
 
@@ -78,8 +75,8 @@ mod test_close_app {
 
     #[test]
     fn happy_path() {
-        let (mut reader, mut writer) = new_test_io_state(b"");
-        let mut state = State::new(&mut reader, &mut writer).unwrap();
+        let mut writer = Vec::new();
+        let mut state = State::new(&mut writer).unwrap();
 
         test_helpers::insert_task(state.get_conn());
 
@@ -105,8 +102,8 @@ mod test_close_app {
 
     #[test]
     fn should_error_with_not_found() {
-        let (mut reader, mut writer) = new_test_io_state(b"");
-        let mut state = State::new(&mut reader, &mut writer).unwrap();
+        let mut writer = Vec::new();
+        let mut state = State::new(&mut writer).unwrap();
         let matches = app().get_matches_from(vec!["close", "1234"]);
         let result = handler(&matches, &mut state).unwrap_err();
         match result {

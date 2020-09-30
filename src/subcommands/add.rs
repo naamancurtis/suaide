@@ -28,9 +28,9 @@ pub fn app() -> App<'static> {
         )
 }
 
-pub fn handler<R: io::BufRead, W: io::Write>(
+pub fn handler<W: io::Write>(
     matches: &ArgMatches,
-    state: &mut State<R, W>,
+    state: &mut State<W>,
 ) -> Result<(), SuaideError> {
     let description: String;
     let ticket: Option<String>;
@@ -68,8 +68,8 @@ pub fn handler<R: io::BufRead, W: io::Write>(
     Ok(())
 }
 
-fn grab_input_from_user<R: io::BufRead, W: io::Write>(
-    state: &mut State<R, W>,
+fn grab_input_from_user<W: io::Write>(
+    state: &mut State<W>,
 ) -> Result<(String, Option<String>), SuaideError> {
     let description = state.get_input("description", None)?;
     let ticket = state.get_optional_input("ID", None)?;
@@ -82,7 +82,7 @@ mod test_add_app {
 
     use crate::domain::{Status, Task};
     use crate::schema::suaide::dsl::*;
-    use crate::state::{new_test_io_state, State};
+    use crate::state::State;
 
     use std::str::from_utf8;
 
@@ -90,8 +90,8 @@ mod test_add_app {
 
     #[test]
     fn test_full_flag_inputs_short() {
-        let (mut reader, mut writer) = new_test_io_state(b"");
-        let mut state = State::new(&mut reader, &mut writer).unwrap();
+        let mut writer = Vec::new();
+        let mut state = State::new(&mut writer).unwrap();
         let matches = app().get_matches_from(vec!["add", "-t", "1234", "-d", "Test Description"]);
         let result = handler(&matches, &mut state);
         assert!(result.is_ok());
@@ -114,8 +114,8 @@ mod test_add_app {
 
     #[test]
     fn test_full_flag_inputs_short_no_ticket() {
-        let (mut reader, mut writer) = new_test_io_state(b"");
-        let mut state = State::new(&mut reader, &mut writer).unwrap();
+        let mut writer = Vec::new();
+        let mut state = State::new(&mut writer).unwrap();
         let matches = app().get_matches_from(vec!["add", "-d", "Test Description"]);
         let result = handler(&matches, &mut state);
         assert!(result.is_ok());
@@ -138,8 +138,8 @@ mod test_add_app {
 
     #[test]
     fn test_full_flag_inputs_long() {
-        let (mut reader, mut writer) = new_test_io_state(b"");
-        let mut state = State::new(&mut reader, &mut writer).unwrap();
+        let mut writer = Vec::new();
+        let mut state = State::new(&mut writer).unwrap();
         let matches = app().get_matches_from(vec![
             "add",
             "--ticket",
@@ -168,8 +168,8 @@ mod test_add_app {
 
     #[test]
     fn test_full_flag_inputs_long_no_ticket() {
-        let (mut reader, mut writer) = new_test_io_state(b"");
-        let mut state = State::new(&mut reader, &mut writer).unwrap();
+        let mut writer = Vec::new();
+        let mut state = State::new(&mut writer).unwrap();
         let matches = app().get_matches_from(vec!["add", "--desc", "Test Description"]);
         let result = handler(&matches, &mut state);
         assert!(result.is_ok());
@@ -204,8 +204,8 @@ mod test_add_app {
 
     #[test]
     fn test_ticket_id_already_exists() {
-        let (mut reader, mut writer) = new_test_io_state(b"");
-        let mut state = State::new(&mut reader, &mut writer).unwrap();
+        let mut writer = Vec::new();
+        let mut state = State::new(&mut writer).unwrap();
 
         test_helpers::insert_task("1234".to_string(), state.get_conn());
 
@@ -219,8 +219,8 @@ mod test_add_app {
 
     #[test]
     fn test_prompts() {
-        let (mut reader, mut writer) = new_test_io_state(b"");
-        let mut state = State::new(&mut reader, &mut writer).unwrap();
+        let mut writer = Vec::new();
+        let mut state = State::new(&mut writer).unwrap();
         let matches = app().get_matches_from(vec!["add"]);
         let result = handler(&matches, &mut state);
         assert!(result.is_ok());
@@ -243,8 +243,8 @@ mod test_add_app {
 
     #[test]
     fn test_prompts_error_on_duplicate_id() {
-        let (mut reader, mut writer) = new_test_io_state(b"");
-        let mut state = State::new(&mut reader, &mut writer).unwrap();
+        let mut writer = Vec::new();
+        let mut state = State::new(&mut writer).unwrap();
 
         test_helpers::insert_task("MOCK DATA".to_string(), state.get_conn());
 

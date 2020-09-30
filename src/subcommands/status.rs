@@ -44,9 +44,9 @@ pub fn app() -> App<'static> {
         )
 }
 
-pub fn handler<R: io::BufRead, W: io::Write>(
+pub fn handler<W: io::Write>(
     matches: &ArgMatches,
-    state: &mut State<R, W>,
+    state: &mut State<W>,
 ) -> Result<(), SuaideError> {
     let is_verbose = matches.is_present("verbose");
     if let Some(task_id) = matches.value_of("task") {

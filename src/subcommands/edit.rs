@@ -25,9 +25,9 @@ pub fn app() -> App<'static> {
         )
 }
 
-pub fn handler<R: io::BufRead, W: io::Write>(
+pub fn handler<W: io::Write>(
     matches: &ArgMatches,
-    state: &mut State<R, W>,
+    state: &mut State<W>,
 ) -> Result<(), SuaideError> {
     let is_verbose = matches.is_present("verbose");
     if let Some(task_id) = matches.value_of("task") {
@@ -55,9 +55,9 @@ pub fn handler<R: io::BufRead, W: io::Write>(
     Err(SuaideError::IncorrectArgs)
 }
 
-fn grab_input_from_user<R: io::BufRead, W: io::Write>(
+fn grab_input_from_user<W: io::Write>(
     task: &Task,
-    state: &mut State<R, W>,
+    state: &mut State<W>,
 ) -> Result<TaskChangeSet, SuaideError> {
     let mut change_set = TaskChangeSet::default();
     let description = state.get_input("description", Some(task.description.clone()))?;
@@ -77,12 +77,12 @@ mod test_edit_app {
 
     use crate::domain::{Status, Task};
     use crate::schema::suaide::dsl::*;
-    use crate::state::{new_test_io_state, State};
+    use crate::state::State;
 
     #[test]
     fn should_edit_a_task() {
-        let (mut reader, mut writer) = new_test_io_state(b"");
-        let mut state = State::new(&mut reader, &mut writer).unwrap();
+        let mut writer = Vec::new();
+        let mut state = State::new(&mut writer).unwrap();
 
         test_helpers::insert_task(state.get_conn());
 

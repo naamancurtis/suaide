@@ -26,13 +26,12 @@ pub fn build_app() -> App<'static> {
         )
 }
 
-pub(crate) fn handle_matches<R, W>(
+pub(crate) fn handle_matches<W>(
     matches: ArgMatches,
-    state: &mut State<R, W>,
+    state: &mut State<W>,
 ) -> Result<(), SuaideError>
 where
     W: io::Write,
-    R: io::BufRead,
 {
     if let Some(prefix) = matches.value_of("prefix") {
         state.set_prefix(prefix.to_string());

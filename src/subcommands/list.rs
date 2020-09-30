@@ -50,9 +50,9 @@ pub fn app() -> App<'static> {
         )
 }
 
-pub fn handler<R: io::BufRead, W: io::Write>(
+pub fn handler<W: io::Write>(
     matches: &ArgMatches,
-    state: &mut State<R, W>,
+    state: &mut State<W>,
 ) -> Result<(), SuaideError> {
     let is_verbose = matches.is_present("verbose");
     let (mut start, mut end): (i64, i64) = (0, Local::now().timestamp());

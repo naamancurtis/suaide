@@ -8,23 +8,20 @@ use crate::database::establish_connection;
 use crate::domain::SuaideError;
 use crate::settings::Settings;
 
-pub struct State<R, W>
+pub struct State<W>
 where
-    R: io::BufRead,
     W: io::Write,
 {
     settings: Settings,
     conn: SqliteConnection,
     w: W,
-    r: R,
 }
 
-impl<R, W> State<R, W>
+impl<W> State<W>
 where
-    R: io::BufRead,
     W: io::Write,
 {
-    pub fn new(reader: R, writer: W) -> Result<Self, SuaideError> {
+    pub fn new(writer: W) -> Result<Self, SuaideError> {
         let mut settings = Settings::new()?;
 
         // Easier to set this to "" within tests, or it might pick
@@ -39,7 +36,6 @@ where
             settings,
             conn,
             w: writer,
-            r: reader,
         })
     }
 
@@ -68,10 +64,6 @@ where
 
     pub fn writer(&mut self) -> &mut W {
         &mut self.w
-    }
-
-    pub fn reader(&mut self) -> &mut R {
-        &mut self.r
     }
 
     pub fn get_input(
@@ -130,13 +122,6 @@ where
 }
 
 #[cfg(test)]
-pub fn new_test_io_state(reader_data: &[u8]) -> (std::io::Cursor<&[u8]>, Vec<u8>) {
-    let reader = std::io::Cursor::new(reader_data);
-    let writer: Vec<u8> = Vec::new();
-    (reader, writer)
-}
-
-#[cfg(test)]
 mod test_state_methods {
     use super::*;
 
@@ -145,8 +130,8 @@ mod test_state_methods {
 
     #[test]
     fn get_input_without_data() {
-        let (mut reader, mut writer) = new_test_io_state(b"");
-        let mut state = State::new(&mut reader, &mut writer).unwrap();
+        let mut writer = Vec::new();
+        let mut state = State::new(&mut writer).unwrap();
         let output = state.get_input("TEST", None);
         assert!(output.is_ok());
         assert_eq!(output.unwrap(), "MOCK DATA".to_string());
@@ -154,8 +139,8 @@ mod test_state_methods {
 
     #[test]
     fn get_input_with_data() {
-        let (mut reader, mut writer) = new_test_io_state(b"");
-        let mut state = State::new(&mut reader, &mut writer).unwrap();
+        let mut writer = Vec::new();
+        let mut state = State::new(&mut writer).unwrap();
         let output = state.get_input("TEST", Some("EXISTING TEXT".to_string()));
         assert!(output.is_ok());
         assert_eq!(output.unwrap(), "MOCK DATA".to_string());
