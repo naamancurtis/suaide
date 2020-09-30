@@ -3,6 +3,9 @@
 _[Stand-Up Aide]_ A lightweight 100% offline CLI App to help with the management of todos & tasks within the terminal,
 with the added functionality to output a stand-up style report.
 
+It's very much in an early beta testing stage, so please raise an issue if you
+spot anything or have a feature request.
+
 ## Requirements
 
 Under the hood this uses `SQLite 3` for storage, _(included in most MacOS

@@ -25,6 +25,8 @@ pub fn handler<W: io::Write>(
     state: &mut State<W>,
 ) -> Result<(), SuaideError> {
     let is_verbose = matches.is_present("verbose");
+    let (today_start, today_end) =
+        calculate_duration_from_timeframe(Local::now().date(), Timeframe::Today);
     let (yesterday_start, yesterday_end) =
         calculate_duration_from_timeframe(Local::now().date(), Timeframe::Yesterday);
 
@@ -32,6 +34,8 @@ pub fn handler<W: io::Write>(
 
     let mut today = suaide
         .filter(status.le(Status::InProgress as i16))
+        .or_filter(status.le(Status::Closed as i16))
+        .filter(closed.between(today_start, today_end))
         .load::<Task>(state.get_conn())?;
 
     let mut yesterday = suaide
