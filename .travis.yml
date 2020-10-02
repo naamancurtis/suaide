@@ -19,7 +19,7 @@ matrix:
       install:
         - rustup component add rustfmt
       script:
-        - cargo fmt --verbose --all -- --check
+        - cargo fmt --verbose
 
 script:
   - cargo build --verbose --all
