@@ -57,7 +57,7 @@ pub fn handler<W: io::Write>(
             _,
         )) => Err(SuaideError::TicketAlreadyExistsError),
         Err(e) => Err(SuaideError::from(e)),
-        Ok(x) => Ok(x),
+        Ok(x) => Ok(x)
     }?;
     writeln!(
         state.writer(),

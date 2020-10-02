@@ -34,8 +34,11 @@ pub fn handler<W: io::Write>(
 
     let mut today = suaide
         .filter(status.le(Status::InProgress as i16))
-        .or_filter(status.le(Status::Closed as i16))
-        .filter(closed.between(today_start, today_end))
+        .or_filter(
+            status
+                .le(Status::Closed as i16)
+                .and(closed.between(today_start, today_end)),
+        )
         .load::<Task>(state.get_conn())?;
 
     let mut yesterday = suaide
