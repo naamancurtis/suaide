@@ -1,9 +1,11 @@
 # suaide
 
-_[Stand-Up Aide]_ A lightweight 100% offline CLI App to help with the management of todos & tasks within the terminal,
+[![Build Status](https://api.travis-ci.com/naamancurtis/suaide.svg?branch=master)](https://travis-ci.com/naamancurtis/suaide) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+_[Stand-up Aide]_ A lightweight 100% offline CLI App to help with the management of todos & tasks within the terminal,
 with the added functionality to output a stand-up style report.
 
-It's very much in an early beta testing stage, so please raise an issue if you
+It's very much in an early _alpha_ testing stage, so please raise an issue if you
 spot anything or have a feature request.
 
 ## Requirements
@@ -14,15 +16,15 @@ a recent version of it _(this was developed on `SQLite v3.28.0`)_.
 
 ## Basic API
 
-| Command   | Description                    |
-| --------- | ------------------------------ |
-| `add`     | Adds a new task                |
-| `edit`    | Edit a task                    |
-| `list`    | Lists all tasks                |
-| `remove`  | Deletes a task                 |
-| `close`   | Marks a task as closed         |
-| `status`  | Change the status of a task    |
-| `standup` | Prints out the stand-up output |
+| Command   | Description                    | Example             |
+| --------- | ------------------------------ | ------------------- |
+| `add`     | Adds a new task                | `suaide add`        |
+| `edit`    | Edit a task                    | `suaide edit 123`   |
+| `list`    | Lists all tasks                | `suaide list -a`    |
+| `remove`  | Deletes a task                 | `suaide remove 123` |
+| `close`   | Marks a task as closed         | `suaide remove 123` |
+| `status`  | Change the status of a task    | `suaide status 123` |
+| `standup` | Prints out the stand-up output | `suaide standup`    |
 
 ## Settings
 
