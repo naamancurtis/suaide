@@ -8,22 +8,22 @@ use crate::domain::{AddTask, SuaideError};
 use crate::schema::suaide;
 use crate::state::State;
 
-pub fn app() -> App<'static> {
+pub fn app<'a>() -> App<'a, 'static> {
     App::new("add")
         .about("Add new task")
         .arg(
             Arg::with_name("ticket_id")
                 .long("ticket")
-                .short('t')
+                .short("t")
                 .requires("description")
-                .about("Ticket identifier")
+                .help("Ticket identifier")
                 .takes_value(true),
         )
         .arg(
             Arg::with_name("description")
                 .long("desc")
-                .short('d')
-                .about("Description")
+                .short("d")
+                .help("Description")
                 .takes_value(true),
         )
 }
@@ -192,13 +192,13 @@ mod test_add_app {
 
     #[test]
     fn test_full_flag_inputs_short_errors_with_no_description() {
-        let matches = app().try_get_matches_from(vec!["add", "-t", "1234"]);
+        let matches = app().get_matches_from_safe(vec!["add", "-t", "1234"]);
         assert!(matches.is_err());
     }
 
     #[test]
     fn test_full_flag_inputs_long_errors_with_no_description() {
-        let matches = app().try_get_matches_from(vec!["add", "-ticket", "1234"]);
+        let matches = app().get_matches_from_safe(vec!["add", "-ticket", "1234"]);
         assert!(matches.is_err());
     }
 

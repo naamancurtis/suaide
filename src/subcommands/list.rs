@@ -8,13 +8,13 @@ use crate::common::time::{calculate_duration_from_dates, calculate_duration_from
 use crate::domain::{SuaideError, Task};
 use crate::state::State;
 
-pub fn app() -> App<'static> {
+pub fn app<'a>() -> App<'a, 'static> {
     App::new("list")
         .about("List your tasks")
         .arg(
             Arg::with_name("timeframe")
                 .index(1)
-                .about("What timeframe would you like to list the tasks for?")
+                .help("What timeframe would you like to list the tasks for?")
                 .conflicts_with("duration")
                 .default_value("today")
                 .possible_values(&["today", "yesterday", "week", "lastweek", "month", "all"])
@@ -23,11 +23,11 @@ pub fn app() -> App<'static> {
         .arg(
             Arg::with_name("duration")
                 .long("duration")
-                .short('d')
+                .short("d")
                 .conflicts_with("timeframe")
                 .number_of_values(2)
                 .next_line_help(true)
-                .long_about(
+                .long_help(
                     "Search for all tasks between two dates. \nDates should be provided in one of the following formats \"YYYY-MM-DD\" or \"DD mmm YYYY\"\nExample: 2020-01-01 or 1 Jan 2020\n",
                 )
                 .takes_value(true),
@@ -45,8 +45,8 @@ pub fn app() -> App<'static> {
         .arg(
             Arg::with_name("verbose")
                 .long("verbose")
-                .short('v')
-                .about("Provide additional information about each task"),
+                .short("v")
+                .help("Provide additional information about each task"),
         )
 }
 

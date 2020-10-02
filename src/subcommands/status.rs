@@ -7,20 +7,20 @@ use crate::common::{inputs::get_state_input, storage::get_task};
 use crate::domain::{Status, SuaideError, Task, TaskChangeSet};
 use crate::state::State;
 
-pub fn app() -> App<'static> {
+pub fn app<'a>() -> App<'a, 'static> {
     App::new("status")
         .about("Change the status of a task")
         .arg(
             Arg::with_name("task")
                 .index(1)
-                .about("The task to update")
+                .help("The task to update")
                 .required(true)
                 .takes_value(true),
         )
         .arg(
             Arg::with_name("state")
                 .index(2)
-                .about("The state to update the task with")
+                .help("The state to update the task with")
                 .possible_values(&[
                     "open",
                     "o",
@@ -39,8 +39,8 @@ pub fn app() -> App<'static> {
         .arg(
             Arg::with_name("verbose")
                 .long("verbose")
-                .short('v')
-                .about("Provide additional information about each task"),
+                .short("v")
+                .help("Provide additional information about each task"),
         )
 }
 

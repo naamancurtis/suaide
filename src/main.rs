@@ -6,6 +6,7 @@ extern crate diesel_migrations;
 use crate::state::State;
 use app::{build_app, handle_matches};
 use domain::SuaideError;
+use std::io;
 
 mod schema;
 
@@ -19,8 +20,9 @@ mod subcommands;
 
 fn main() -> Result<(), SuaideError> {
     let app = build_app();
-    let stdout = std::io::stdout();
+    let stdout = io::stdout();
     let mut writer = stdout.lock();
     let mut state = State::new(&mut writer)?;
-    handle_matches(app.get_matches(), &mut state)
+
+    handle_matches(app, &mut state)
 }

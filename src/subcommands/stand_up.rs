@@ -9,14 +9,14 @@ use crate::common::time::calculate_duration_from_timeframe;
 use crate::domain::{Status, SuaideError, Task, Timeframe};
 use crate::state::State;
 
-pub fn app() -> App<'static> {
+pub fn app<'a>() -> App<'a, 'static> {
     App::new("standup")
         .about("Output your stand-up report")
         .arg(
             Arg::with_name("verbose")
                 .long("verbose")
-                .short('v')
-                .about("Provide additional information about each task"),
+                .short("v")
+                .help("Provide additional information about each task"),
         )
 }
 

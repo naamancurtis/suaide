@@ -8,11 +8,11 @@ use diesel::prelude::*;
 use crate::domain::{Status, SuaideError};
 use crate::state::State;
 
-pub fn app() -> App<'static> {
+pub fn app<'a>() -> App<'a, 'static> {
     App::new("close").about("Mark a task as closed").arg(
         Arg::with_name("task")
             .index(1)
-            .about("The task to mark as closed")
+            .help("The task to mark as closed")
             .required(true)
             .takes_value(true),
     )

@@ -8,21 +8,21 @@ use diesel::prelude::*;
 use crate::domain::SuaideError;
 use crate::state::State;
 
-pub fn app() -> App<'static> {
+pub fn app<'a>() -> App<'a, 'static> {
     App::new("remove")
         .about("Delete task(s)")
         .arg(
             Arg::with_name("task")
                 .index(1)
-                .about("What ticket would you like to delete")
+                .help("What ticket would you like to delete")
                 .takes_value(true),
         )
         .arg(
             Arg::with_name("all")
-                .about("Delete all tasks")
+                .help("Delete all tasks")
                 .long("all")
-                .short('a')
-                .exclusive(true)
+                .short("a")
+                .conflicts_with("task")
                 .takes_value(false),
         )
 }

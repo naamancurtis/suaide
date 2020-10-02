@@ -7,21 +7,21 @@ use crate::common::{inputs::get_state_input, storage::get_task};
 use crate::domain::{SuaideError, Task, TaskChangeSet};
 use crate::state::State;
 
-pub fn app() -> App<'static> {
+pub fn app<'a>() -> App<'a, 'static> {
     App::new("edit")
         .about("Edit a task")
         .arg(
             Arg::with_name("task")
                 .index(1)
                 .required(true)
-                .about("The task to edit")
+                .help("The task to edit")
                 .takes_value(true),
         )
         .arg(
             Arg::with_name("verbose")
                 .long("verbose")
-                .short('v')
-                .about("Provide additional information about each task"),
+                .short("v")
+                .help("Provide additional information about each task"),
         )
 }
 

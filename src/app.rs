@@ -1,15 +1,16 @@
-use clap::{App, Arg, ArgMatches};
+use clap::{App, AppSettings, Arg};
 use std::io;
 
 use crate::domain::SuaideError;
 use crate::state::State;
 use crate::subcommands::*;
 
-pub fn build_app() -> App<'static> {
+pub fn build_app<'a>() -> App<'a, 'static> {
     App::new("Suaide")
         .version("v0.1")
         .author("Naaman C. <naaman.the.dev@gmail.com>")
-        .about("A simple cli app to track tasks and auto-generate stand-up reports")
+        .help("A simple cli app to track tasks and auto-generate stand-up reports")
+        .global_settings(&[AppSettings::ColorAuto, AppSettings::VersionlessSubcommands])
         .subcommand(add::app())
         .subcommand(edit::app())
         .subcommand(list::app())
@@ -19,20 +20,22 @@ pub fn build_app() -> App<'static> {
         .subcommand(stand_up::app())
         .arg(
             Arg::with_name("prefix")
-                .about("Overwrite the ticket prefix")
+                .help("Overwrite the ticket prefix")
                 .takes_value(true)
-                .short('p')
+                .short("p")
                 .long("prefix"),
         )
 }
 
-pub(crate) fn handle_matches<W>(
-    matches: ArgMatches,
+pub(crate) fn handle_matches<'a, W>(
+    app: App<'a, 'static>,
     state: &mut State<W>,
 ) -> Result<(), SuaideError>
 where
     W: io::Write,
 {
+    let matches = app.get_matches();
+
     if let Some(prefix) = matches.value_of("prefix") {
         state.set_prefix(prefix.to_string());
     }
@@ -46,24 +49,5 @@ where
         ("status", Some(matches)) => status::handler(matches, state),
         ("standup", Some(matches)) => stand_up::handler(matches, state),
         _ => Err(SuaideError::SubCommandNotFound),
-    }
-}
-
-#[cfg(test)]
-mod test_build_app {
-    use super::build_app;
-
-    #[test]
-    fn add_is_present() {
-        let app = build_app();
-        let subcommands = app
-            .get_subcommands()
-            .iter()
-            .map(|app| app.get_name())
-            .collect::<Vec<&str>>();
-        let expected = [
-            "add", "edit", "list", "remove", "close", "status", "standup",
-        ];
-        assert_eq!(subcommands, expected);
     }
 }
