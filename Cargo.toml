@@ -11,6 +11,11 @@ repository = "https://github.com/naamancurtis/suaide"
 categories = ["command-line-utilities", "development-tools"]
 keywords = ["cli", "tasks", "todo", "tracker", "standup"]
 
+exclude = [".travis.yml"]
+ 
+[badges]
+travis-ci = { repository = "naamancurtis/suaide" }
+
 [dependencies]
 clap = "2.33.3"
 chrono = { version = "0.4.15", features = ["serde"] }
